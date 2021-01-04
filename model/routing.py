@@ -2100,18 +2100,22 @@ class Routing(object):
 
     def energyWaterBody(self):
         self.getEnergyRatio()
-        lakeTransFrac = pcr.max(pcr.min((self.WaterBodies.waterBodyOutflow) / (self.waterBodyStorageTimeBefore), 1.0),0.0)
+        lakeTransFrac = pcr.max(pcr.min((self.WaterBodies.waterBodyOutflow) / (self.waterBodyStorageTimeBefore),
+                                        1.0), 0.0)
         lakeTransFrac = cover(ifthen(self.WaterBodies.waterBodyOut, lakeTransFrac), 0.0)
         
-        energyTotal = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-         pcr.areatotal(pcr.ifthen(self.landmask,self.totEW * self.dynamicFracWat * self.cellArea),\
-         pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))), self.totEW * self.dynamicFracWat * self.cellArea)
-        self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., energyTotal*lakeTransFrac),energyTotal)
+        energyTotal = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., pcr.areatotal(
+                pcr.ifthen(self.landmask, self.totEW * self.dynamicFracWat * self.cellArea),
+                pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds))),
+            self.totEW * self.dynamicFracWat * self.cellArea)
+        self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., energyTotal*lakeTransFrac),
+                              energyTotal)
         self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut, (1-lakeTransFrac) * energyTotal), 0.0)
-        #energyTotalRoutable = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+        # energyTotalRoutable = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
         # pcr.areatotal(pcr.ifthen(self.landmask,self.totEW * self.routableEnergyFraction * self.dynamicFracWat * self.cellArea),\
         # pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))), self.totEW * self.routableEnergyFraction * self.dynamicFracWat * self.cellArea)
-        self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., energyTotal * self.routableEnergyFraction * lakeTransFrac), energyTotal)
+        self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                                     energyTotal * self.routableEnergyFraction * lakeTransFrac), energyTotal)
         
         self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut, energyTotal - self.volumeEW), 0.0)
         #self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut,  energyTotal * (1 - self.routableEnergyFraction * lakeTransFrac)), 0.0)
@@ -2124,31 +2128,39 @@ class Routing(object):
     def energyWaterBodyAverage(self):
         self.totalVolumeEW = self.volumeEW + self.remainingVolumeEW
 
-        energyTotal = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-         pcr.areatotal(pcr.ifthen(self.landmask,self.totalVolumeEW),\
-         pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))), self.totalVolumeEW)
+        energyTotal = cover(
+            pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                       pcr.areatotal(pcr.ifthen(self.landmask, self.totalVolumeEW),
+                                     pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds))),
+            self.totalVolumeEW)
 
-        energyAverageLakeCell = cover(energyTotal * self.cellArea \
-          /pcr.areatotal(pcr.cover(self.cellArea, 0.0),pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds)), energyTotal)
+        energyAverageLakeCell = cover(
+            energyTotal * self.cellArea /
+            pcr.areatotal(pcr.cover(self.cellArea, 0.0),
+                          pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds)), energyTotal)
 
         self.totEW = cover(energyAverageLakeCell /(self.dynamicFracWat * self.cellArea), 1e-16)
 
-        self.temp_water_height = self.return_water_body_storage_to_channel(self.channelStorageNow)/(self.dynamicFracWat * self.cellArea)
+        self.temp_water_height = self.return_water_body_storage_to_channel(
+            self.channelStorageNow)/(self.dynamicFracWat * self.cellArea)
       
-        iceReductionFactor = ifthen(self.landmask, cover(self.dynamicFracWatBeforeRouting/self.dynamicFracWat,1.0))
+        iceReductionFactor = ifthen(self.landmask, cover(self.dynamicFracWatBeforeRouting/self.dynamicFracWat, 1.0))
         
         self.deltaIceThickness = iceReductionFactor * self.deltaIceThickness
-        self.deltaIceThickness= pcr.min(self.deltaIceThickness,self.temp_water_height)
+        self.deltaIceThickness = pcr.min(self.deltaIceThickness, self.temp_water_height)
         
         self.iceThickness = iceReductionFactor * self.iceThickness
-
-        self.iceThickness= pcr.max(0,self.iceThickness+(self.deltaIceThickness+pcr.ifthenelse(self.temperatureKelvin >= self.iceThresTemp,0,self.correctPrecip)))
-        self.iceThickness= pcr.ifthenelse((self.iceThickness <= 0.001) & (self.deltaIceThickness < 0),0,self.iceThickness)
+        self.iceThickness = pcr.max(0,
+                                    self.iceThickness + (self.deltaIceThickness + pcr.ifthenelse(
+                                        self.temperatureKelvin >= self.iceThresTemp, 0, self.correctPrecip)))
+        self.iceThickness = pcr.ifthenelse((self.iceThickness <= 0.001) & (self.deltaIceThickness < 0),
+                                           0, self.iceThickness)
         self.channelStorageNow = self.channelStorageNow - self.deltaIceThickness * self.dynamicFracWat * self.cellArea        
 
-        self.waterTemp= pcr.ifthenelse(self.temp_water_height > self.critical_water_height,\
-          self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater),self.temperatureKelvin)
-        self.waterTemp= pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1,self.iceThresTemp+0.1,self.waterTemp)
+        self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,
+                                        self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater),
+                                        self.temperatureKelvin)
+        self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1, self.iceThresTemp+0.1, self.waterTemp)
 
     def update_routing_only(self, currTimeStep, meteo):
         
@@ -2461,7 +2473,7 @@ class Routing(object):
         landRunoff = self.runoff
         self.correctPrecip = pcr.scalar(0.0)
         self.dynamicFracWatBeforeRouting = self.dynamicFracWat
-        self.dynamicFracWat = pcr.max(self.dynamicFracWat,0.001)
+        self.dynamicFracWat = pcr.max(self.dynamicFracWat, 0.001)
         landT = pcr.cover(self.directRunoff/landRunoff *
                           pcr.max(self.iceThresTemp+0.1, self.temperatureKelvin-self.deltaTPrec) +
                           self.interflowTotal/landRunoff *
@@ -2470,15 +2482,16 @@ class Routing(object):
                           pcr.max(self.iceThresTemp+5.0, self.annualT), self.temperatureKelvin)
         iceHeatTransfer = self.heatTransferIce * (self.temperatureKelvin - self.iceThresTemp)
         waterHeatTransfer = self.heatTransferIce * (self.iceThresTemp - self.waterTemp)
-        noIce = pcr.ifthenelse(self.iceThickness > 0,pcr.boolean(0),
+        noIce = pcr.ifthenelse(self.iceThickness > 0, pcr.boolean(0),
                                pcr.ifthenelse(((iceHeatTransfer-waterHeatTransfer) < 0) &
                                               (self.temperatureKelvin < self.iceThresTemp),
-                                              pcr.boolean(0),pcr.boolean(1)))
+                                              pcr.boolean(0), pcr.boolean(1)))
         waterHeatTransfer = pcr.ifthenelse(noIce, self.heatTransferWater * (self.temperatureKelvin - self.waterTemp),
                                            waterHeatTransfer)
         radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.rsw
-        radiativHeatTransfer = radiativHeatTransfer - self.stefanBoltzman * (pcr.ifthenelse(noIce,\
-           self.waterTemp, self.iceThresTemp)**4 - self.atmosEmis * self.temperatureKelvin**4)
+        radiativHeatTransfer = radiativHeatTransfer - self.stefanBoltzman * \
+                               (pcr.ifthenelse(noIce, self.waterTemp, self.iceThresTemp)**4 -
+                                self.atmosEmis * self.temperatureKelvin**4)
         advectedEnergyPrecip = pcr.max(0, self.correctPrecip) *\
                                pcr.max(self.iceThresTemp + 0.1, self.temperatureKelvin-self.deltaTPrec) * \
                                self.specificHeatWater * self.densityWater / timeSec
@@ -2488,12 +2501,13 @@ class Routing(object):
         # DSHI:     net flux for ice layer [W/m2]
         # wi:       thickness of ice cover [m]
         # wh:       available water height
-        # deltaIceThickness:      change in thickness per day, melt negative
+        # deltaIceThickness: change in thickness per day, melt negative
         # diceHeatTransfer= pcr.ifthenelse(noIce,0,iceHeatTransfer-waterHeatTransfer+advectedEnergyPrecip+radiativHeatTransfer)
         diceHeatTransfer = pcr.ifthenelse(noIce, 0, iceHeatTransfer - waterHeatTransfer + radiativHeatTransfer)
         self.deltaIceThickness = -diceHeatTransfer * timeSec / (self.densityWater * self.latentHeatFusion)
         self.deltaIceThickness = pcr.max(-self.iceThickness, self.deltaIceThickness)
         self.deltaIceThickness = pcr.min(self.deltaIceThickness, pcr.max(0, self.maxIceThickness-self.iceThickness))
+
         # returning direct gain over water surface
         watQ = pcr.ifthenelse(self.temperatureKelvin >= self.iceThresTemp,
                               pcr.max(0, self.correctPrecip) -
@@ -2523,8 +2537,7 @@ class Routing(object):
         self.totEW = totStorLoc * self.waterTemp * self.specificHeatWater * self.densityWater
         dtotStorLoc = pcr.max(-totStorLoc, dtotStorLoc)
         
-        # latent heat flux due to evapotranspiration [W/m2]
-        # and advected energy due to ice melt included here
+        # latent heat flux due to evapotranspiration [W/m2] and advected energy due to ice melt included here
         # to account for correction in water storage
         latentHeat = -self.waterBodyEvaporation/self.dynamicFracWat * self.densityWater * self.latentHeatVapor/timeSec
         advectedEnergyPrecip = advectedEnergyPrecip + deltaIceThickness_melt * self.iceThresTemp * \
@@ -2534,23 +2547,31 @@ class Routing(object):
         dtotEWC = dtotStorLoc * self.specificHeatWater * self.densityWater
         dtotEWLoc = (waterHeatTransfer + pcr.scalar(noIce) * (radiativHeatTransfer+latentHeat)) * timeSec
         dtotEWAdv = (advectedEnergyInflow + pcr.scalar(noIce) * advectedEnergyPrecip) * timeSec
-        dtotEWLoc = pcr.min(dtotEWLoc,\
-          pcr.max(0,totEWC*self.temperatureKelvin-self.totEW)+pcr.ifthenelse(dtotStorLoc > 0,\
-          pcr.max(0,dtotEWC*self.temperatureKelvin-dtotEWAdv),0))
-        dtotEWLoc = pcr.ifthenelse(self.waterTemp > self.temperatureKelvin,\
-          pcr.min(0,dtotEWLoc),dtotEWLoc)
-        dtotEWLoc = pcr.max(dtotEWLoc,\
-          pcr.min(0, (totEWC+dtotEWC) * pcr.max(self.temperatureKelvin, self.iceThresTemp+.1)-(self.totEW+dtotEWAdv)))
+        dtotEWLoc = pcr.min(
+            dtotEWLoc, pcr.max(
+                0, totEWC * self.temperatureKelvin-self.totEW) +
+                       pcr.ifthenelse(dtotStorLoc > 0,
+                                      pcr.max(0, dtotEWC * self.temperatureKelvin-dtotEWAdv), 0))
+        dtotEWLoc = pcr.ifthenelse(self.waterTemp > self.temperatureKelvin, pcr.min(0,dtotEWLoc),dtotEWLoc)
+        dtotEWLoc = pcr.max(dtotEWLoc,
+                            pcr.min(0,
+                                    (totEWC+dtotEWC) * pcr.max(self.temperatureKelvin,
+                                                               self.iceThresTemp+.1)-(self.totEW+dtotEWAdv)))
         # change in energy storage and resulting temperature
         self.totEW = pcr.max(0, self.totEW+dtotEWLoc+dtotEWAdv)
         self.temp_water_height = pcr.max(1e-16, totStorLoc + dtotStorLoc)
         
-        self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,\
-          self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater), self.temperatureKelvin)
+        self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,
+                                        self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater),
+                                        self.temperatureKelvin)
         self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1, self.iceThresTemp+0.1, self.waterTemp)
 
     def calculate_oxygen(self, P=1):
-        self.O2 = ((pcr.exp(7.7117-1.31403*pcr.log(self.waterTemp+45.93))) * P * (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))/P)* (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2)))*P))/ (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2))))/ (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2))))
+        self.O2 = ((pcr.exp(7.7117-1.31403 * pcr.ln(self.waterTemp+45.93))) *
+                   P * (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))/P) *
+                   (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2)))*P)) /\
+                  (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))) /\
+                  (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2))))
 
     def getEnergyRatio(self, hypolimnionTemperature=277.15):
         self.WaterBodies.getThermoClineDepth()
