@@ -18,8 +18,10 @@ Created on Jan 18, 2017
 
 @author: Niko Wanders
 '''
+
+
 class RoutingModel(object):
-    
+
     def __init__(self, configuration, currTimeStep, initialState = None):
         self._configuration = configuration
         self._modelTime = currTimeStep
@@ -29,14 +31,14 @@ class RoutingModel(object):
         # Read the ldd map.
         self.lddMap = vos.readPCRmapClone(\
                   configuration.routingOptions['lddMap'],
-                  configuration.cloneMap,configuration.tmpDir,configuration.globalOptions['inputDir'],True)
-        #ensure ldd map is correct, and actually of type "ldd"
+                  configuration.cloneMap, configuration.tmpDir, configuration.globalOptions['inputDir'], True)
+        # ensure ldd map is correct, and actually of type "ldd"
         self.lddMap = pcr.lddrepair(pcr.ldd(self.lddMap))
  
         if configuration.globalOptions['landmask'] != "None":
             self.landmask = vos.readPCRmapClone(\
             configuration.globalOptions['landmask'],
-            configuration.cloneMap,configuration.tmpDir,configuration.globalOptions['inputDir'])
+            configuration.cloneMap, configuration.tmpDir, configuration.globalOptions['inputDir'])
         else:
             self.landmask = pcr.defined(self.lddMap)
        
@@ -76,12 +78,10 @@ class RoutingModel(object):
         #restore state from disk. used when restarting
         pass
 
-
     #FIXME: implement
     def setState(self, state):
         logger.info("cannot set state")
 
-        
     def report(self):
         #report the state. which states are written when is based on the configuration
 
@@ -145,8 +145,7 @@ class RoutingModel(object):
         result['routing'].update(self.routing.getPseudoState())
         
         return result
-        
-    
+
     def checkWaterBalance(self, storesAtBeginning, storesAtEnd):
 		# for the entire modules: snow + interception + soil + groundwater + waterDemand
 		# except: river/routing 
@@ -164,7 +163,6 @@ class RoutingModel(object):
                                True,\
                                self._modelTime.fulldate,threshold=1e-3)
 
-        
     def read_forcings(self):
         logger.info("reading forcings for time %s", self._modelTime)
         self.meteo.read_forcings(self._modelTime)
@@ -176,7 +174,10 @@ class RoutingModel(object):
         #    storesAtBeginning = self.totalLandStores()
 
         self.meteo.update(self._modelTime)                                         
-        self.routing.update_routing_only(self._modelTime,self.meteo)
+        if self.routing.routingOnly:
+            self.routing.update_routing_only(self._modelTime, self.meteo)
+        else:
+            pass
 
         #if (report_water_balance):
         #    storesAtEnd = self.totalLandStores()

@@ -21,12 +21,12 @@ class Reporting(object):
 
     #list of all output variables
     
-    def __init__(self, configuration, model, modelTime,sampleNumber=None):
+    def __init__(self, configuration, model, modelTime, sampleNumber=None):
         self._model = model
         self._modelTime = modelTime
 
         # output directory storing netcdf files:
-        self.outNCDir  = str(configuration.outNCDir)
+        self.outNCDir = str(configuration.outNCDir)
         if sampleNumber != None:
             self.outNCDir = self.outNCDir+str(sampleNumber)+"/"
             os.mkdir(self.outNCDir)
@@ -626,4 +626,3 @@ class Reporting(object):
                        vos.MV),timeStamp)
 
         logger.info("reporting for time %s", self._modelTime.currTime)
-        

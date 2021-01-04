@@ -29,7 +29,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 # temperature
 pcrglobwb_variable_name = 'temperature'
 netcdf_short_name[pcrglobwb_variable_name] = 'temperature'
-netcdf_unit[pcrglobwb_variable_name]       = 'degrees Celcius'
+netcdf_unit[pcrglobwb_variable_name]       = 'degrees Celsius'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = 'mean_air_temperature'

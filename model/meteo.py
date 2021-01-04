@@ -58,7 +58,7 @@ class Meteo(object):
             self.evaporationVarName = iniItems.meteoOptions['evaporationVarName']
         except:
             self.evaporationVarName = "evaporation"            
-        ### Read CDF for CDF matching seasonal forecasting
+        # Read CDF for CDF matching seasonal forecasting
         try:
             self.matchingCDF = iniItems.meteoOptions['matchingCDF']
         except:
@@ -344,7 +344,7 @@ class Meteo(object):
         factor = pcr.cover(factor, 1.0)
         self.referencePotET = pcr.max(0.0, factor * self.referencePotET)
 
-    def read_forcings(self,currTimeStep):
+    def read_forcings(self, currTimeStep):
         # reading precipitation:
         self.precipitation = vos.netcdf2PCRobjClone(\
                                   self.preFileNC,self.precipitationVarName,\
@@ -355,7 +355,7 @@ class Meteo(object):
 
         self.precipitation = pcr.max(0.,self.precipitation*\
                 self.precipitationCorrectionFactor)
-        self.precipitation = pcr.cover( self.precipitation, 0.0)
+        self.precipitation = pcr.cover(self.precipitation, 0.0)
         
         # ignore very small values of precipitation (less than 0.00001 m/day or less than 0.01 kg.m-2.day-1 )
         if self.usingDailyTimeStepForcingData:
