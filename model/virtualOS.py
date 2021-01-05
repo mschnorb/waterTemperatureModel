@@ -100,13 +100,10 @@ def netcdf2PCRobjCloneWithoutTime(ncFile, varName,
 
     # convert to PCR object and close f
     if specificFillValue != None:
-        outPCR = pcr.numpy2pcr(pcr.Scalar, \
-                  regridData2FinerGrid(factor,cropData,MV), \
-                  float(specificFillValue))
+        outPCR = pcr.numpy2pcr(pcr.Scalar, regridData2FinerGrid(factor, cropData, MV), float(specificFillValue))
     else:
-        outPCR = pcr.numpy2pcr(pcr.Scalar, \
-                  regridData2FinerGrid(factor,cropData,MV), \
-                  float(f.variables[varName]._FillValue))
+        outPCR = pcr.numpy2pcr(pcr.Scalar, regridData2FinerGrid(factor, cropData, MV),
+                               float(f.variables[varName]._FillValue))
 
     #~ # debug:
     #~ pcr.report(outPCR,"tmp.map")
@@ -114,7 +111,8 @@ def netcdf2PCRobjCloneWithoutTime(ncFile, varName,
     #~ os.system('aguila tmp.map')
 
     #f.close();
-    f = None ; cropData = None
+    f = None
+    cropData = None
     # PCRaster object
     return (outPCR)
 

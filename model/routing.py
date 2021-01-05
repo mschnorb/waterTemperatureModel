@@ -2351,8 +2351,8 @@ class Routing(object):
                                   currTimeStep.fulldate, threshold=1e-3)
 
         if self.waterTemperature:
-            if currTimeStep.day == 1 or currTimeStep.timeStepPCR == 1:
-                self.readExtensiveMeteo(currTimeStep)
+            #if currTimeStep.day == 1 or currTimeStep.timeStepPCR == 1:
+            self.readExtensiveMeteo(currTimeStep)
             self.channelStorageTimeBefore = pcr.max(0.0, self.channelStorage)
             self.energyLocal_routing_only(meteo)
             self.energyWaterBody()
@@ -2460,8 +2460,10 @@ class Routing(object):
             pcr.min(1.0, 0.7 + 0.0000595 * self.vaporPressure * pcr.exp(1500 / self.temperatureKelvin))  # Idso(1981)
         landRunoff = self.runoff
         self.correctPrecip = pcr.scalar(0.0)
+
         self.dynamicFracWatBeforeRouting = self.dynamicFracWat
         self.dynamicFracWat = pcr.max(self.dynamicFracWat, 0.001)
+
         landT = pcr.cover(self.directRunoff/landRunoff *
                           pcr.max(self.iceThresTemp+0.1, self.temperatureKelvin-self.deltaTPrec) +
                           self.interflowTotal/landRunoff *

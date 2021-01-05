@@ -341,8 +341,7 @@ class Meteo(object):
                                                     cloneMapFileName=self.cloneMap,
                                                     LatitudeLongitude=True)
 
-        self.precipitation = pcr.max(0.,self.precipitation *
-                                     self.precipitationCorrectionFactor)
+        self.precipitation = pcr.max(0., self.precipitation * self.precipitationCorrectionFactor)
         self.precipitation = pcr.cover(self.precipitation, 0.0)
         
         # ignore very small values of precipitation (less than 0.00001 m/day or less than 0.01 kg.m-2.day-1 )
@@ -356,7 +355,7 @@ class Meteo(object):
                                                   useDoy=None,
                                                   cloneMapFileName=self.cloneMap,
                                                   LatitudeLongitude=True)
-        if cellvalue(mapmaximum(self.temperature),1,1)[0] > 150.:
+        if cellvalue(mapmaximum(self.temperature), 1, 1)[0] > 150.:
             self.temperature = self.temperature - 273.15
 
         if self.refETPotMethod == 'Hargreaves':
