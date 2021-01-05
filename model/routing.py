@@ -336,21 +336,17 @@ class Routing(object):
             # energy balance, proxy for temperature of groundwater store: mean annual temperature
             # and reduction in the temperature for falling rain            
             self.deltaTPrec = pcr.scalar(1.5)
-            # table to convert cloud cover to sunshine hours
-            # and constants to calculate radiation according to
-            # Doornkamp & Pruitt
-            self.sunFracTBL = iniItems.meteoOptions['sunhoursTable']
-            self.radCon = 0.25
-            self.radSlope = 0.50
             # stefan-boltzman constant [W/m2/K]
             self.stefanBoltzman = 5.67e-8
-
-            # Path to cloud cover file
-            self.cloudFileNC = iniItems.meteoOptions['cloudcoverNC']
-            self.radFileNC = iniItems.meteoOptions['radiationNC']
+            # Path to daily meteorology files
+            self.radShortFileNC = iniItems.meteoOptions['radiationShortNC']
             self.vapFileNC = iniItems.meteoOptions['vaporNC']
-            self.annualT = vos.netcdf2PCRobjCloneWithoutTime(iniItems.meteoOptions['annualAvgTNC'],
-                                                             "temperature", self.cloneMap) + pcr.scalar(273.15)
+            self.annualTNC = iniItems.meteoOptions['annualAvgTNC']
+            # Annual temperature climatology
+            #self.annualT = vos.netcdf2PCRobjCloneWithoutTime(iniItems.meteoOptions['annualAvgTNC'],
+            #                                                 "temperature",
+            #                                                 cloneMapFileName=self.cloneMap) + pcr.scalar(273.15)
+            # Ice cover parameters
             self.maxIceThickness = 3.0
             self.deltaIceThickness = 0.0
         try:
@@ -361,7 +357,7 @@ class Routing(object):
         # get the initialConditions
         self.getICs(iniItems, initialConditions)
         
-        # initiate old style reporting                                  # TODO: remove this!
+        # initiate old style reporting  # TODO: remove this!
         self.initiate_old_style_routing_reporting(iniItems)
 
     def getICs(self, iniItems, iniConditions=None):
@@ -466,25 +462,24 @@ class Routing(object):
             self.waterBodyStorage = iniConditions['routing']['waterBodyStorage']
 
     def getRoutingParamAvgDischarge(self, avgDischarge, dist2celllength):
-        # obtain routing parameters based on average (longterm) discharge
-        # output: channel dimensions and 
-        #         characteristicDistance (for accuTravelTime input)
+        # obtain routing parameters based on average (long term) discharge
+        # output: channel dimensions and characteristicDistance (for accuTravelTime input)
         
-        yMean = self.eta * pow (avgDischarge, self.nu ) # avgDischarge in m3/s
-        wMean = self.tau * pow (avgDischarge, self.phi)
+        yMean = self.eta * pow(avgDischarge, self.nu )  # avgDischarge in m3/s
+        wMean = self.tau * pow(avgDischarge, self.phi)
  
         # option to use constant channel width (m)
         # if not isinstance(self.constantChannelWidth,types.NoneType):\
         if not self.constantChannelWidth is None:
-           wMean = pcr.cover(self.constantChannelWidth, wMean)
+            wMean = pcr.cover(self.constantChannelWidth, wMean)
 
         # minimum channel width (m)
         wMean = pcr.max(self.minChannelWidth, wMean)
 
-        yMean = pcr.max(yMean,0.01) # channel depth (m)
-        wMean = pcr.max(wMean,0.01) # channel width (m)
-        yMean = pcr.cover(yMean,0.01)
-        wMean = pcr.cover(wMean,0.01)
+        yMean = pcr.max(yMean, 0.01)  # channel depth (m)
+        wMean = pcr.max(wMean, 0.01)  # channel width (m)
+        yMean = pcr.cover(yMean, 0.01)
+        wMean = pcr.cover(wMean, 0.01)
 
         # characteristicDistance (dimensionless)
         # - This will be used for accutraveltimeflux & accutraveltimestate
@@ -492,16 +487,10 @@ class Routing(object):
         # - discharge = the total amount of material flowing through the cell (m3/s)
         # - storage   = the amount of material which is deposited in the cell (m3)
         #
+        characteristicDistance = ((yMean * wMean) / (wMean + 2*yMean)) ** (2./3.) * \
+                                 (self.gradient ** 0.5) / self.manningsN * vos.secondsPerDay()  # meter/day
         characteristicDistance = \
-             ( (yMean *   wMean)/ \
-               (wMean + 2*yMean) )**(2./3.) * \
-              ((self.gradient)**(0.5))/ \
-                self.manningsN * \
-                vos.secondsPerDay()                         #  meter/day
-
-        characteristicDistance = \
-         pcr.max((self.cellSizeInArcDeg)*0.000000001,\
-                 characteristicDistance/dist2celllength)    # arcDeg/day
+            pcr.max(self.cellSizeInArcDeg * 0.000000001, characteristicDistance / dist2celllength)    # arcDeg/day
         
         # charateristicDistance for each lake/reservoir:
         lakeReservoirCharacteristicDistance = pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
@@ -528,13 +517,14 @@ class Routing(object):
         # current solution: using the function "roundup" to ignore 
         #                   zero and very small values 
         characteristicDistance = \
-         pcr.roundup(characteristicDistance*100.)/100.      # arcDeg/day
+            pcr.roundup(characteristicDistance*100.)/100.  # arcDeg/day
         
         # and set minimum value of characteristicDistance:
         characteristicDistance = pcr.cover(characteristicDistance, 0.1*self.cellSizeInArcDeg)
-        characteristicDistance = pcr.max(0.100*self.cellSizeInArcDeg, characteristicDistance) # TODO: check what the minimum distance for accutraveltime function
+        characteristicDistance = pcr.max(0.100*self.cellSizeInArcDeg, characteristicDistance)
+        # TODO: check what the minimum distance for accutraveltime function
 
-        return (yMean, wMean, characteristicDistance)
+        return yMean, wMean, characteristicDistance
 
     def accuTravelTime(self):
         		
@@ -1963,36 +1953,30 @@ class Routing(object):
         return floodFrac,floodZ,alphaQ, dischargeInitial
 
     def readExtensiveMeteo(self, currTimeStep):
-        self.cloudCover = vos.netcdf2PCRobjClone(
-            self.cloudFileNC, 'cld',
+
+        # Incoming shortwave radiation (W/m**2)
+        self.radiationShort = vos.netcdf2PCRobjClone(
+            self.radShortFileNC, 'rsw',
             str(currTimeStep.fulldate),
             useDoy=None,
             cloneMapFileName=self.cloneMap,
-            LatitudeLongitude=True)/pcr.scalar(100)
-                                  
-        self.radiation = vos.netcdf2PCRobjClone(
-            self.radFileNC, 'RSW',
-            str(currTimeStep.fulldate),
-            useDoy="month",
-            cloneMapFileName=self.cloneMap,
             LatitudeLongitude=True)
 
+        # Vapor pressure (hPa)
         self.vaporPressure = vos.netcdf2PCRobjClone(
-            self.vapFileNC, 'vap',
+            self.vapFileNC, 'vp',
             str(currTimeStep.fulldate),
             useDoy=None,
             cloneMapFileName=self.cloneMap,
             LatitudeLongitude=True)
 
-        # vapour pressure, used to return atmospheric emissivity [-]
-        self.atmosEmis = pcr.scalar(1.0)  # pcr.min(1.,(0.53+0.0065*(self.vaporPressure)**0.5)*(1.+0.4*self.cloudCover))
-        cld1 = pcr.roundoff(10*self.cloudCover+0.5)
-        cld0 = cld1-1
-        sun0 = pcr.lookupscalar(self.sunFracTBL, cld0)
-        deltaSun = (pcr.lookupscalar(self.sunFracTBL, cld1)-sun0)/(cld1-cld0)
-        sunFrac = sun0+(10*self.cloudCover-cld0)*deltaSun
-        radFrac = self.radCon + self.radSlope*sunFrac
-        self.rsw = radFrac*self.radiation
+        # Annual temperature - daily running average (deg-C)
+        self.annualT = vos.netcdf2PCRobjClone(
+            self.annualTNC, "tas",
+            str(currTimeStep.fulldate),
+            useDoy=None,
+            cloneMapFileName=self.cloneMap,
+            LatitudeLongitude=True) + pcr.scalar(273.15)
         
     def energyLocal(self, meteo, landSurface, groundwater, timeSec=vos.secondsPerDay()):
         #-surface water energy fluxes [W/m2]
@@ -2010,8 +1994,10 @@ class Routing(object):
         # SHQ:      advected energy due to lateral inflow
         # SHL:      latent heat flux, based on actual open water evaporation
         #           to be evaluated when actual evap is known
-        
+
         self.temperatureKelvin = meteo.temperature + pcr.scalar(273.15)
+        self.atmosEmis = \
+            pcr.min(1.0, 0.7 + 0.0000595 * self.vaporPressure * pcr.exp(1500 / self.temperatureKelvin))  # Idso(1981)
         landRunoff = self.runoff
         self.correctPrecip = pcr.scalar(0.0)
         self.dynamicFracWatBeforeRouting = self.dynamicFracWat
@@ -2025,7 +2011,7 @@ class Routing(object):
           pcr.ifthenelse(((iceHeatTransfer-waterHeatTransfer) < 0) & (self.temperatureKelvin < self.iceThresTemp),\
           pcr.boolean(0),pcr.boolean(1)))
         waterHeatTransfer = pcr.ifthenelse(noIce, self.heatTransferWater * (self.temperatureKelvin - self.waterTemp), waterHeatTransfer)
-        radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.rsw
+        radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.radiationShort
         radiativHeatTransfer = radiativHeatTransfer - self.stefanBoltzman * (pcr.ifthenelse(noIce,\
           self.waterTemp, self.iceThresTemp)**4 - self.atmosEmis * self.temperatureKelvin**4)
         advectedEnergyPrecip = pcr.max(0,self.correctPrecip) *\
@@ -2468,8 +2454,10 @@ class Routing(object):
         # SHQ:      advected energy due to lateral inflow
         # SHL:      latent heat flux, based on actual open water evaporation
         #           to be evaluated when actual evap is known
-        
+
         self.temperatureKelvin = meteo.temperature + pcr.scalar(273.15)
+        self.atmosEmis = \
+            pcr.min(1.0, 0.7 + 0.0000595 * self.vaporPressure * pcr.exp(1500 / self.temperatureKelvin))  # Idso(1981)
         landRunoff = self.runoff
         self.correctPrecip = pcr.scalar(0.0)
         self.dynamicFracWatBeforeRouting = self.dynamicFracWat
@@ -2488,7 +2476,7 @@ class Routing(object):
                                               pcr.boolean(0), pcr.boolean(1)))
         waterHeatTransfer = pcr.ifthenelse(noIce, self.heatTransferWater * (self.temperatureKelvin - self.waterTemp),
                                            waterHeatTransfer)
-        radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.rsw
+        radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.radiationShort
         radiativHeatTransfer = radiativHeatTransfer - self.stefanBoltzman * \
                                (pcr.ifthenelse(noIce, self.waterTemp, self.iceThresTemp)**4 -
                                 self.atmosEmis * self.temperatureKelvin**4)
@@ -2515,8 +2503,7 @@ class Routing(object):
         #watQ= pcr.ifthenelse(self.temperatureKelvin >= self.iceThresTemp,self.waterBodyEvaporation/self.dynamicFracWat,0)
         self.waterBodyEvaporation = pcr.ifthenelse(self.temperatureKelvin >= self.iceThresTemp,
                                                    self.waterBodyEvaporation, 0)  # TODO move
-        # returning vertical gains/losses [m3] over lakes and channels
-        # given their corresponding area
+        # returning vertical gains/losses [m3] over lakes and channels given their corresponding area
         deltaIceThickness_melt = pcr.max(0, -self.deltaIceThickness)
         #landQCont= pcr.max(0,landFrac/watFrac*landQ)
         verticalGain = (watQ+(landRunoff)/(self.dynamicFracWat)+deltaIceThickness_melt)
@@ -2528,8 +2515,7 @@ class Routing(object):
 
         # net cumulative input for mass balance check [m3]
         #self.dtotStor = channeldStor
-        # change in water storage due to vertical change only
-        # used to limit heating and cooling of surface water
+        # change in water storage due to vertical change only used to limit heating and cooling of surface water
         dtotStorLoc = verticalGain
         #totStorLoc = self.channelStorageTimeBefore/(self.dynamicFracWat*self.cellArea)-dtotStorLoc
         totStorLoc = self.return_water_body_storage_to_channel(self.channelStorageTimeBefore) / \
