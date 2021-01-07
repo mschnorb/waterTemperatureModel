@@ -150,17 +150,15 @@ class Routing(object):
         self.minChannelWidth = pcr.scalar(0.0)
         if "minimumChannelWidth" in iniItems.routingOptions.keys():
             if iniItems.routingOptions['minimumChannelWidth'] != "None":
-               self.minChannelWidth = vos.readPCRmapClone(\
-                                      iniItems.routingOptions['minimumChannelWidth'],
-                                      self.cloneMap,self.tmpDir,self.inputDir)
+               self.minChannelWidth = vos.readPCRmapClone(iniItems.routingOptions['minimumChannelWidth'],
+                                                          self.cloneMap, self.tmpDir, self.inputDir)
         
         # option to use constant channel width (m)
         self.constantChannelWidth = None
         if "constantChannelWidth" in iniItems.routingOptions.keys():
             if iniItems.routingOptions['constantChannelWidth'] != "None":
-               self.constantChannelWidth = vos.readPCRmapClone(\
-                                           iniItems.routingOptions['constantChannelWidth'],
-                                           self.cloneMap, self.tmpDir, self.inputDir)
+               self.constantChannelWidth = vos.readPCRmapClone(iniItems.routingOptions['constantChannelWidth'],
+                                                               self.cloneMap, self.tmpDir, self.inputDir)
 
         # an assumption for broad sheet flow in kinematic wave methods/approaches        
         self.beta = 0.6 
@@ -200,11 +198,8 @@ class Routing(object):
         # minimum number of a sub time step based on the configuration/ini file:  
         if 'maxiumLengthOfSubTimeStep' in iniItems.routingOptions.keys():
             maxiumLengthOfSubTimeStep = float(iniItems.routingOptions['maxiumLengthOfSubTimeStep'])
-            minimum_number_of_sub_time_step  = np.ceil(
-                                               vos.secondsPerDay() / maxiumLengthOfSubTimeStep )
-            self.limit_num_of_sub_time_steps = max(\
-                                               minimum_number_of_sub_time_step, \
-                                               self.limit_num_of_sub_time_steps)                                 
+            minimum_number_of_sub_time_step = np.ceil(vos.secondsPerDay() / maxiumLengthOfSubTimeStep)
+            self.limit_num_of_sub_time_steps = max(minimum_number_of_sub_time_step, self.limit_num_of_sub_time_steps)
         # 
         self.limit_num_of_sub_time_steps = np.int(self.limit_num_of_sub_time_steps)
         
@@ -277,13 +272,13 @@ class Routing(object):
                     deltaX[iCnt] = (1.-self.areaFractions[iCnt-1]**0.5)*deltaX[iCnt]
                 if iCnt > 0:
                     sumX[iCnt] = pcr.ifthenelse(self.relZ[iCnt] == self.relZ[iCnt-1],sumX[iCnt-1]+deltaX[iCnt],0.)
-                    minSlope = pcr.ifthenelse(self.relZ[iCnt] == self.relZ[iCnt-1],\
-                        pcr.max(sumX[iCnt],minSlope),minSlope)
-            minSlope = pcr.min(self.gradient,0.5*pcr.max(deltaX[1],minSlope)**-1.)
+                    minSlope = pcr.ifthenelse(self.relZ[iCnt] == self.relZ[iCnt-1],
+                                              pcr.max(sumX[iCnt], minSlope), minSlope)
+            minSlope = pcr.min(self.gradient, 0.5*pcr.max(deltaX[1], minSlope)**-1.)
             # add small increment to elevations to each sill except in the case of lakes
             for iCnt in range(self.nrZLevels):
-                self.relZ[iCnt]= self.relZ[iCnt]+sumX[iCnt]*pcr.ifthenelse(self.relZ[self.nrZLevels-1] > 0.,\
-                    minSlope,0.)
+                self.relZ[iCnt] = self.relZ[iCnt]+sumX[iCnt]*pcr.ifthenelse(self.relZ[self.nrZLevels-1] > 0.,
+                                                                           minSlope,0.)
             # set slope and smoothing interval between dy= y(i+1)-y(i) and dx= x(i+1)-x(i)
             # on the basis of volume
             # slope and smoothing interval
@@ -298,7 +293,8 @@ class Routing(object):
                     pcr.max(0.001,self.floodVolume[iCnt]-self.floodVolume[iCnt-1])
             for iCnt in range(1,self.nrZLevels):
                 if iCnt < (self.nrZLevels-1):
-                    self.mInterval[iCnt] = 0.5*self.reductionKK*pcr.min(self.floodVolume[iCnt+1]-self.floodVolume[iCnt],\
+                    self.mInterval[iCnt] = 0.5*self.reductionKK*pcr.min(
+                        self.floodVolume[iCnt+1]-self.floodVolume[iCnt],
                         self.floodVolume[iCnt]-self.floodVolume[iCnt-1])
                 else:
                     self.mInterval[iCnt] = 0.5*self.reductionKK*(self.floodVolume[iCnt]-self.floodVolume[iCnt-1])
@@ -319,7 +315,7 @@ class Routing(object):
             # density of water [kg/m3]
             # latent heat of vaporization [J/kg]
             # latent heat of fusion [J/kg]
-            # specific heat of water [J/kg/degC]
+            # specific heat of water [J/kg/K]
             # heat transfer coefficient for water [W/m2/degC]
             # heat transfer coefficient for ice [W/m2/degC]
             # albedo of water [-]
@@ -581,7 +577,8 @@ class Routing(object):
         # - estimated based on the initial or latest sub-time step discharge (unit: m3/s)
         #
         length_of_sub_time_step = pcr.ifthenelse(self.subDischarge > 0.0, 
-                                  self.water_height * self.dynamicFracWat * self.cellArea / self.subDischarge, vos.secondsPerDay())
+                                  self.water_height * self.dynamicFracWat * self.cellArea / self.subDischarge,
+                                                 vos.secondsPerDay())
 
         # determine the number of sub time steps (based on Rens van Beek's method - check this method with him)
         #
@@ -589,22 +586,23 @@ class Routing(object):
                              (self.water_height > self.critical_water_height) & \
                              (self.lddMap != pcr.ldd(5))
         #
-        number_of_sub_time_steps = vos.secondsPerDay() /\
+        number_of_sub_time_steps = vos.secondsPerDay() / \
                                    pcr.cover(
-                                   pcr.areaminimum(\
-                                   pcr.ifthen(critical_condition, \
-                                              length_of_sub_time_step),self.landmask),\
-                                             vos.secondsPerDay()/self.limit_num_of_sub_time_steps)   
+                                       pcr.areaminimum(
+                                           pcr.ifthen(critical_condition,
+                                                      length_of_sub_time_step),self.landmask),
+                                       vos.secondsPerDay()/self.limit_num_of_sub_time_steps)
         number_of_sub_time_steps = 1.25 * number_of_sub_time_steps + 1
         number_of_sub_time_steps = pcr.roundup(number_of_sub_time_steps)
         #
-        number_of_loops = max(1.0, pcr.cellvalue(pcr.mapmaximum(number_of_sub_time_steps),1)[1])     # minimum number of sub_time_steps = 1 
+        # minimum number of sub_time_steps = 1
+        number_of_loops = max(1.0, pcr.cellvalue(pcr.mapmaximum(number_of_sub_time_steps), 1)[1])
         number_of_loops = int(max(self.limit_num_of_sub_time_steps, number_of_loops))
         
         # actual length of sub-time step (s)
         length_of_sub_time_step = vos.secondsPerDay() / number_of_loops
 
-        return (length_of_sub_time_step, number_of_loops)                               
+        return length_of_sub_time_step, number_of_loops
 
     def simplifiedKinematicWave(self, meteo, landSurface, groundwater): 
         """
@@ -623,10 +621,11 @@ class Routing(object):
         channelStorageThatWillNotMove = pcr.ifthenelse(self.channelStorage < 0.0, self.channelStorage, 0.0)
         
         # channelStorage that will be given to the ROUTING operation:
-        channelStorageForRouting = pcr.max(0.0, self.channelStorage)                              # unit: m3
+        channelStorageForRouting = pcr.max(0.0, self.channelStorage)  # unit: m3
         
         # water height (m)
-        self.water_height = pcr.min(self.max_water_height, channelStorageForRouting / (pcr.max(self.min_fracwat_for_water_height, self.dynamicFracWat) * self.cellArea))
+        self.water_height = pcr.min(self.max_water_height, channelStorageForRouting /
+                                    (pcr.max(self.min_fracwat_for_water_height, self.dynamicFracWat) * self.cellArea))
         self.iniWater = self.water_height
         # estimate the length of sub-time step (unit: s):
         length_of_sub_time_step, number_of_loops = \
@@ -639,42 +638,46 @@ class Routing(object):
             #logger.info(msg)
             
             if self.floodPlain:
-                self.dynamicFracWat, self.water_height, alpha, dischargeInitial = self.kinAlphaComposite(channelStorageForRouting)
-                self.dynamicFracWat = pcr.min(pcr.max(self.dynamicFracWat, self.WaterBodies.dynamicFracWat),1.0)
+                self.dynamicFracWat, self.water_height, alpha, dischargeInitial = \
+                    self.kinAlphaComposite(channelStorageForRouting)
+                self.dynamicFracWat = pcr.min(pcr.max(self.dynamicFracWat, self.WaterBodies.dynamicFracWat), 1.0)
             else:    
-                #alpha parameter and initial discharge variable needed for kinematic wave
+                # alpha parameter and initial discharge variable needed for kinematic wave
                 alpha, dischargeInitial = self.calculate_alpha_and_initial_discharge_for_kinematic_wave() 
 
             # at the lake/reservoir outlets, use the discharge of water bofy outflow
-            waterBodyOutflowInM3PerSec = pcr.ifthen(\
-                                         self.WaterBodies.waterBodyOut,
-                                         self.WaterBodies.waterBodyOutflow) / vos.secondsPerDay()
-            waterBodyOutflowInM3PerSec = pcr.ifthen(\
-                                         pcr.scalar(self.WaterBodies.waterBodyIds) > 0.0,
-                                         pcr.cover(waterBodyOutflowInM3PerSec,0.0))
+            waterBodyOutflowInM3PerSec = pcr.ifthen(self.WaterBodies.waterBodyOut,
+                                                    self.WaterBodies.waterBodyOutflow) / vos.secondsPerDay()
+            waterBodyOutflowInM3PerSec = pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.0,
+                                                    pcr.cover(waterBodyOutflowInM3PerSec,0.0))
             dischargeInitial = pcr.cover(waterBodyOutflowInM3PerSec, dischargeInitial)
 
             # discharge (m3/s) based on kinematic wave approximation
             #logger.info('start pcr.kinematic')
-            self.subDischarge = pcr.kinematic(self.lddMap, dischargeInitial, 0.0, 
-                                              alpha, self.beta, \
+            self.subDischarge = pcr.kinematic(self.lddMap, dischargeInitial, 0.0,
+                                              alpha, self.beta,
                                               1, length_of_sub_time_step, self.cellLengthFD)
             #logger.info('done')
             
             # update channelStorage (m3)
-            storage_change_in_volume  = pcr.upstream(self.lddMap, self.subDischarge * length_of_sub_time_step) - self.subDischarge * length_of_sub_time_step 
+            storage_change_in_volume = pcr.upstream(self.lddMap, self.subDischarge * length_of_sub_time_step) - \
+                                       self.subDischarge * length_of_sub_time_step
             channelStorageForRouting += storage_change_in_volume 
             #
             # route only non negative channelStorage (otherwise stay):
-            channelStorageThatWillNotMove += pcr.ifthenelse(channelStorageForRouting < 0.0, channelStorageForRouting, 0.0)
-            channelStorageForRouting       = pcr.max(0.000, channelStorageForRouting)
+            channelStorageThatWillNotMove += pcr.ifthenelse(channelStorageForRouting < 0.0,
+                                                            channelStorageForRouting, 0.0)
+            channelStorageForRouting = pcr.max(0.000, channelStorageForRouting)
             #
             # update water_height (this will be passed to the next loop)
             if self.floodPlain != True:
-                self.water_height = pcr.min(self.max_water_height, channelStorageForRouting / (pcr.max(self.min_fracwat_for_water_height, self.dynamicFracWat) * self.cellArea))
+                self.water_height = pcr.min(self.max_water_height,
+                                            channelStorageForRouting / (pcr.max(self.min_fracwat_for_water_height,
+                                                                                self.dynamicFracWat) * self.cellArea))
 
             # total discharge_volume (m3) until this present i_loop
-            if i_loop == 0: discharge_volume = pcr.scalar(0.0)
+            if i_loop == 0:
+                discharge_volume = pcr.scalar(0.0)
             discharge_volume += self.subDischarge * length_of_sub_time_step
             
             if self.waterTemperature:
@@ -682,7 +685,6 @@ class Routing(object):
                 self.channelStorageNow = pcr.max(0.0, channelStorageForRouting)
                 self.energyRouting(length_of_sub_time_step)
                 self.channelStorageTimeBefore = pcr.max(0.0, self.channelStorageNow)
-
 
         # channel discharge (m3/day) = self.Q
         self.Q = discharge_volume
@@ -823,13 +825,11 @@ class Routing(object):
         # limited to self.remainWaterBodyPotEvap: remaining potential evaporation (m) from water bodies
 
         # evaporation volume from water bodies (m3) - limited to available channelStorage
-        volLocEvapWaterBody = pcr.min(\
-                              pcr.max(0.0,self.channelStorage),
-                              self.remainWaterBodyPotEvap * self.dynamicFracWat * self.cellArea)
+        volLocEvapWaterBody = pcr.min(
+            pcr.max(0.0, self.channelStorage), self.remainWaterBodyPotEvap * self.dynamicFracWat * self.cellArea)
 
         # update channelStorage (m3) after evaporation from water bodies
-        self.channelStorage = self.channelStorage -\
-                              volLocEvapWaterBody
+        self.channelStorage = self.channelStorage - volLocEvapWaterBody
         self.local_input_to_surface_water -= volLocEvapWaterBody
         
         # update evaporation (m) from water bodies                             
@@ -888,7 +888,7 @@ class Routing(object):
         logger.info("Reducing unmetDemand by allowing extra surface water abstraction.")
 
         extra_surface_water_abstraction = pcr.scalar(0.0)
-        reduction_for_unmetDemand       = pcr.scalar(0.0)
+        reduction_for_unmetDemand = pcr.scalar(0.0)
         
         # estimate channel storage that can be extracted (unit: m3)
         self.readAvlChannelStorage = self.estimate_available_volume_for_abstraction(self.channelStorage)
@@ -909,9 +909,8 @@ class Routing(object):
         
             logger.info("Surface water abstraction is only to satisfy local demand. No network.")
             
-            # reduction_for_unmetDemand
-            reduction_for_unmetDemand = pcr.min(self.readAvlChannelStorage / self.cellArea, \
-                                                potential_unmet_demand)                           # unit: m
+            # reduction_for_unmetDemand; unit: m
+            reduction_for_unmetDemand = pcr.min(self.readAvlChannelStorage / self.cellArea, potential_unmet_demand)
 
             # actual extra surface water abstraction in meter 
             extra_surface_water_abstraction = pcr.ifthen(self.landmask, reduction_for_unmetDemand)
@@ -920,7 +919,8 @@ class Routing(object):
         if landSurface.usingAllocSegments == True and landSurface.limitAbstraction == False:
         
             # TODO: Assuming that there is also network for distributing groundwater abstractions.
-            # Notes: Incorporating distribution network of groundwater source is possible only if limitAbstraction = False.  
+            # Notes: Incorporating distribution network of groundwater source is possible
+            # only if limitAbstraction = False.
 
             logger.info("Using allocation to reduce unmetDemand.")
 
@@ -942,38 +942,37 @@ class Routing(object):
             segActWaterAbs = pcr.min(segAvlWater, segTtlGrossDemand)
             
             # actual extra surface water abstraction volume in each cell (unit: m3)
-            volActWaterAbstract = vos.getValDivZero(\
-                                  cellAvlWater, segAvlWater, vos.smallNumber) * \
-                                  segActWaterAbs                                                 
-            volActWaterAbstract = pcr.min(cellAvlWater,volActWaterAbstract)                               # unit: m3
+            volActWaterAbstract = vos.getValDivZero(cellAvlWater, segAvlWater, vos.smallNumber) * segActWaterAbs
+            volActWaterAbstract = pcr.min(cellAvlWater,volActWaterAbstract)  # unit: m3
             
             # actual extra surface water abstraction in meter 
-            extra_surface_water_abstraction    = pcr.ifthen(self.landmask, volActWaterAbstract) /\
-                                                                             self.cellArea                # unit: m
+            extra_surface_water_abstraction = pcr.ifthen(self.landmask, volActWaterAbstract) / self.cellArea  # unit: m
 
             # allocation extra surface water abstraction volume to each cell (unit: m3)
-            extraVolAllocSurfaceWaterAbstract  = vos.getValDivZero(\
-                                                 cellVolGrossDemand, segTtlGrossDemand, vos.smallNumber) *\
-                                                 segActWaterAbs                                           # unit: m3 
+            extraVolAllocSurfaceWaterAbstract = vos.getValDivZero(cellVolGrossDemand, segTtlGrossDemand,
+                                                                  vos.smallNumber) * segActWaterAbs    # unit: m3
             # reduction for unmetDemand (unit: m)
             reduction_for_unmetDemand = pcr.ifthen(self.landmask, 
-                                        extraVolAllocSurfaceWaterAbstract / self.cellArea)                # unit: m
+                                        extraVolAllocSurfaceWaterAbstract / self.cellArea)   # unit: m
             
             if self.debugWaterBalance:
-    
-                abstraction = pcr.cover(pcr.areatotal(volActWaterAbstract              , landSurface.allocSegments)/landSurface.segmentArea, 0.0)
-                allocation  = pcr.cover(pcr.areatotal(extraVolAllocSurfaceWaterAbstract, landSurface.allocSegments)/landSurface.segmentArea, 0.0)
+                abstraction = pcr.cover(pcr.areatotal(
+                    volActWaterAbstract, landSurface.allocSegments)/landSurface.segmentArea, 0.0)
+                allocation  = pcr.cover(pcr.areatotal(
+                    extraVolAllocSurfaceWaterAbstract, landSurface.allocSegments)/landSurface.segmentArea, 0.0)
             
-                vos.waterBalanceCheck([pcr.ifthen(self.landmask,abstraction)],\
-                                      [pcr.ifthen(self.landmask, allocation)],\
-                                      [pcr.scalar(0.0)],\
-                                      [pcr.scalar(0.0)],\
-                                      'extra surface water abstraction - allocation per zone/segment (PS: Error here may be caused by rounding error.)' ,\
-                                       True,\
-                                       "",threshold=5e-4)
+                vos.waterBalanceCheck([pcr.ifthen(self.landmask, abstraction)],
+                                      [pcr.ifthen(self.landmask, allocation)],
+                                      [pcr.scalar(0.0)],
+                                      [pcr.scalar(0.0)],
+                                      'extra surface water abstraction - allocation per zone/segment \
+                                      (PS: Error here may be caused by rounding error.)',
+                                      True,
+                                      "",
+                                      threshold=5e-4)
 
         # correcting surface water abstraction 
-        landSurface.actSurfaceWaterAbstract   += extra_surface_water_abstraction                # unit: m
+        landSurface.actSurfaceWaterAbstract += extra_surface_water_abstraction   # unit: m
             
         # update channelStorage (m3) after extra_surface_water_abstraction
         self.channelStorage = self.channelStorage -\
@@ -981,20 +980,20 @@ class Routing(object):
         self.local_input_to_surface_water -= extra_surface_water_abstraction * self.cellArea
 
         # correcting surface water allocation after reduction of unmetDemand
-        landSurface.allocSurfaceWaterAbstract += reduction_for_unmetDemand                      # unit: m
+        landSurface.allocSurfaceWaterAbstract += reduction_for_unmetDemand   # unit: m
 
         # recalculating unmetDemand (m)
-        groundwater.unmetDemand =  landSurface.totalPotentialGrossDemand -\
-                                   landSurface.allocSurfaceWaterAbstract -\
-                                   groundwater.allocNonFossilGroundwater
+        groundwater.unmetDemand = landSurface.totalPotentialGrossDemand - \
+                                  landSurface.allocSurfaceWaterAbstract - \
+                                  groundwater.allocNonFossilGroundwater
 
         if self.debugWaterBalance:
-
             test = pcr.ifthen(groundwater.unmetDemand < 0.0, groundwater.unmetDemand)
             a,b,c = vos.getMinMaxMean(pcr.scalar(test),True)
             threshold = 1e-3
             if abs(a) > threshold or abs(b) > threshold:
-                logger.info("WARNING !!!!! Water Balance Error. There is negative unmetDemand ... Min %f Max %f Mean %f" %(a,b,c))
+                logger.info("WARNING !!!!! Water Balance Error. There is negative unmetDemand ... \
+                Min %f Max %f Mean %f" %(a, b, c))
 
     def simple_update(self, landSurface, groundwater, currTimeStep, meteo):
 
@@ -1010,8 +1009,7 @@ class Routing(object):
         self.local_input_to_surface_water = pcr.scalar(0.0)          # initiate the variable, start from zero
 
         # runoff from landSurface cells (unit: m/day)
-        self.runoff = landSurface.landSurfaceRunoff +\
-                      groundwater.baseflow   
+        self.runoff = landSurface.landSurfaceRunoff + groundwater.baseflow
         
         # update channelStorage (unit: m3) after runoff
         self.channelStorage += self.runoff * self.cellArea
@@ -1614,8 +1612,7 @@ class Routing(object):
         # long term variance and standard deviation of discharge values
         # see: online algorithm on http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
         varDischarge = self.m2tDischarge / \
-                       pcr.max(1.,\
-                       pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)-1.)
+                       pcr.max(1., pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)-1.)
         stdDischarge = pcr.max(varDischarge**0.5, 0.0)
         
         # calculate minimum discharge for environmental flow (m3/s)
@@ -1634,7 +1631,7 @@ class Routing(object):
         readAvlChannelStorage = pcr.max(0.0,channelStorage)                                                             
         
         # safety factor to reduce readAvlChannelStorage
-        safety_factor = vos.getValDivZero(pcr.max(0.0, pcr.min(self.avgDischargeShort, self.avgDischarge)), \
+        safety_factor = vos.getValDivZero(pcr.max(0.0, pcr.min(self.avgDischargeShort, self.avgDischarge)),
                                           minDischargeForEnvironmentalFlow, vos.smallNumber)
         safety_factor = pcr.min(1.00, pcr.max(0.00, safety_factor))
         readAvlChannelStorage = safety_factor * pcr.max(0.0, readAvlChannelStorage)                                                             
@@ -1665,9 +1662,9 @@ class Routing(object):
             if self.outDailyTotNC[0] != "None":
                 for var in self.outDailyTotNC:
                     # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_dailyTot.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_dailyTot.nc",
+                                                var,
+                                                "undefined")
             # MONTHly output in netCDF files:
             # - cummulative
             if self.outMonthTotNC[0] != "None":
@@ -1675,9 +1672,9 @@ class Routing(object):
                     # initiating monthlyVarTot (accumulator variable):
                     vars(self)[var+'MonthTot'] = None
                     # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_monthTot.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_monthTot.nc",
+                                                var,
+                                                "undefined")
             # - average
             if self.outMonthAvgNC[0] != "None":
                 for var in self.outMonthAvgNC:
@@ -1686,16 +1683,16 @@ class Routing(object):
                     # initiating monthlyVarAvg:
                     vars(self)[var+'MonthAvg'] = None
                      # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_monthAvg.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_monthAvg.nc",
+                                                var,
+                                                "undefined")
             # - last day of the month
             if self.outMonthEndNC[0] != "None":
                 for var in self.outMonthEndNC:
                      # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_monthEnd.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_monthEnd.nc",
+                                                var,
+                                                "undefined")
             # YEARly output in netCDF files:
             # - cummulative
             if self.outAnnuaTotNC[0] != "None":
@@ -1703,9 +1700,9 @@ class Routing(object):
                     # initiating yearly accumulator variable:
                     vars(self)[var+'AnnuaTot'] = None
                     # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_annuaTot.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaTot.nc",
+                                                var,
+                                                "undefined")
             # - average
             if self.outAnnuaAvgNC[0] != "None":
                 for var in self.outAnnuaAvgNC:
@@ -1714,55 +1711,51 @@ class Routing(object):
                     # initiating annualyTotAvg (accumulator variable)
                     vars(self)[var+'AnnuaTot'] = None
                      # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_annuaAvg.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaAvg.nc",
+                                                var,
+                                                "undefined")
             # - last day of the year
             if self.outAnnuaEndNC[0] != "None":
                 for var in self.outAnnuaEndNC:
                      # creating the netCDF files:
-                    self.netcdfObj.createNetCDF(str(self.outNCDir)+"/"+ \
-                                                str(var)+"_annuaEnd.nc",\
-                                                    var,"undefined")
+                    self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaEnd.nc",
+                                                var,
+                                                "undefined")
 
     def old_style_routing_reporting(self, currTimeStep):
 
         if self.report == True:
-            timeStamp = datetime.datetime(currTimeStep.year,\
-                                          currTimeStep.month,\
-                                          currTimeStep.day,\
-                                          0)
+            timeStamp = datetime.datetime(currTimeStep.year, currTimeStep.month, currTimeStep.day, 0)
             # writing daily output to netcdf files
             timestepPCR = currTimeStep.timeStepPCR
             if self.outDailyTotNC[0] != "None":
                 for var in self.outDailyTotNC:
-                    self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_dailyTot.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var),vos.MV),\
-                                         timeStamp,timestepPCR-1)
+                    self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_dailyTot.nc",
+                                               var,
+                                               pcr2numpy(self.__getattribute__(var), vos.MV),
+                                               timeStamp,
+                                               timestepPCR-1)
 
             # writing monthly output to netcdf files
-            # -cummulative
+            # -cumulative
             if self.outMonthTotNC[0] != "None":
                 for var in self.outMonthTotNC:
 
                     # introduce variables at the beginning of simulation or
                     #     reset variables at the beginning of the month
-                    if currTimeStep.timeStepPCR == 1 or \
-                       currTimeStep.day == 1:\
-                       vars(self)[var+'MonthTot'] = pcr.scalar(0.0)
+                    if currTimeStep.timeStepPCR == 1 or currTimeStep.day == 1:
+                        vars(self)[var+'MonthTot'] = pcr.scalar(0.0)
 
                     # accumulating
                     vars(self)[var+'MonthTot'] += vars(self)[var]
 
                     # reporting at the end of the month:
                     if currTimeStep.endMonth == True: 
-                        self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_monthTot.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var+'MonthTot'),\
-                           vos.MV),timeStamp,currTimeStep.monthIdx-1)
+                        self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_monthTot.nc",
+                                                   var,
+                                                   pcr2numpy(self.__getattribute__(var+'MonthTot'), vos.MV),
+                                                   timeStamp,
+                                                   currTimeStep.monthIdx-1)
             # -average
             if self.outMonthAvgNC[0] != "None":
                 for var in self.outMonthAvgNC:
@@ -1773,30 +1766,29 @@ class Routing(object):
                         #     reset accumulator at the beginning of the month
                         if currTimeStep.timeStepPCR == 1 or \
                            currTimeStep.day == 1:\
-                           vars(self)[var+'MonthTot'] = pcr.scalar(0.0)
+                           vars(self)[var + 'MonthTot'] = pcr.scalar(0.0)
                         # accumulating
-                        vars(self)[var+'MonthTot'] += vars(self)[var]
+                        vars(self)[var + 'MonthTot'] += vars(self)[var]
 
                     # calculating average & reporting at the end of the month:
                     if currTimeStep.endMonth == True:
-                        vars(self)[var+'MonthAvg'] = vars(self)[var+'MonthTot']/\
-                                                     currTimeStep.day  
-                        self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_monthAvg.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var+'MonthAvg'),\
-                           vos.MV),timeStamp,currTimeStep.monthIdx-1)
+                        vars(self)[var + 'MonthAvg'] = vars(self)[var + 'MonthTot']/currTimeStep.day
+                        self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_monthAvg.nc",
+                                                   var,
+                                                   pcr2numpy(self.__getattribute__(var + 'MonthAvg'), vos.MV),
+                                                   timeStamp,
+                                                   currTimeStep.monthIdx-1)
             #
             # -last day of the month
             if self.outMonthEndNC[0] != "None":
                 for var in self.outMonthEndNC:
                     # reporting at the end of the month:
                     if currTimeStep.endMonth == True: 
-                        self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_monthEnd.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var),vos.MV),\
-                                         timeStamp,currTimeStep.monthIdx-1)
+                        self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_monthEnd.nc",
+                                                   var,
+                                                   pcr2numpy(self.__getattribute__(var), vos.MV),
+                                                   timeStamp,
+                                                   currTimeStep.monthIdx-1)
 
             # writing yearly output to netcdf files
             # -cummulative
@@ -1805,20 +1797,19 @@ class Routing(object):
 
                     # introduce variables at the beginning of simulation or
                     #     reset variables at the beginning of the month
-                    if currTimeStep.timeStepPCR == 1 or \
-                       currTimeStep.doy == 1:\
-                       vars(self)[var+'AnnuaTot'] = pcr.scalar(0.0)
+                    if currTimeStep.timeStepPCR == 1 or currTimeStep.doy == 1:
+                        vars(self)[var + 'AnnuaTot'] = pcr.scalar(0.0)
 
                     # accumulating
-                    vars(self)[var+'AnnuaTot'] += vars(self)[var]
+                    vars(self)[var + 'AnnuaTot'] += vars(self)[var]
 
                     # reporting at the end of the year:
                     if currTimeStep.endYear == True: 
-                        self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_annuaTot.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var+'AnnuaTot'),\
-                           vos.MV),timeStamp,currTimeStep.annuaIdx-1)
+                        self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var)  +"_annuaTot.nc",
+                                                   var,
+                                                   pcr2numpy(self.__getattribute__(var + 'AnnuaTot'), vos.MV),
+                                                   timeStamp,
+                                                   currTimeStep.annuaIdx-1)
             # -average
             if self.outAnnuaAvgNC[0] != "None":
                 for var in self.outAnnuaAvgNC:
@@ -1826,32 +1817,30 @@ class Routing(object):
                     if var not in self.outAnnuaTotNC: 
                         # introduce accumulator at the beginning of simulation or
                         #     reset accumulator at the beginning of the year
-                        if currTimeStep.timeStepPCR == 1 or \
-                           currTimeStep.doy == 1:\
-                           vars(self)[var+'AnnuaTot'] = pcr.scalar(0.0)
+                        if currTimeStep.timeStepPCR == 1 or currTimeStep.doy == 1:
+                            vars(self)[var + 'AnnuaTot'] = pcr.scalar(0.0)
                         # accumulating
-                        vars(self)[var+'AnnuaTot'] += vars(self)[var]
+                        vars(self)[var + 'AnnuaTot'] += vars(self)[var]
                     #
                     # calculating average & reporting at the end of the year:
                     if currTimeStep.endYear == True:
-                        vars(self)[var+'AnnuaAvg'] = vars(self)[var+'AnnuaTot']/\
-                                                     currTimeStep.doy  
-                        self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_annuaAvg.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var+'AnnuaAvg'),\
-                           vos.MV),timeStamp,currTimeStep.annuaIdx-1)
+                        vars(self)[var + 'AnnuaAvg'] = vars(self)[var + 'AnnuaTot']/currTimeStep.doy
+                        self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaAvg.nc",
+                                                   var,
+                                                   pcr2numpy(self.__getattribute__(var + 'AnnuaAvg'), vos.MV),
+                                                   timeStamp,
+                                                   currTimeStep.annuaIdx-1)
             #
             # -last day of the year
             if self.outAnnuaEndNC[0] != "None":
                 for var in self.outAnnuaEndNC:
                     # reporting at the end of the year:
                     if currTimeStep.endYear == True: 
-                        self.netcdfObj.data2NetCDF(str(self.outNCDir)+"/"+ \
-                                         str(var)+"_annuaEnd.nc",\
-                                         var,\
-                          pcr2numpy(self.__getattribute__(var),vos.MV),\
-                                         timeStamp,currTimeStep.annuaIdx-1)
+                        self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaEnd.nc",
+                                                   var,
+                                                   pcr2numpy(self.__getattribute__(var), vos.MV),
+                                                   timeStamp,
+                                                   currTimeStep.annuaIdx-1)
 
     def returnFloodedFraction(self, channelStorage):
         #-returns the flooded fraction given the flood volume and the associated water height
@@ -2267,9 +2256,6 @@ class Routing(object):
         # the following variable defines total local change (input) to surface water storage bodies # unit: m3 
         # - only local processes; therefore not considering any routing processes
         self.local_input_to_surface_water = pcr.scalar(0.0)  # initiate the variable, start from zero
-
-        # runoff from landSurface cells (unit: m/day)
-        #self.runoff = self.directRunoff + self.interflow + self.baseflow   
         
         # update channelStorage (unit: m3) after runoff
         self.channelStorage += self.runoff * self.cellArea
@@ -2358,17 +2344,17 @@ class Routing(object):
             self.energyWaterBody()
 
         # ROUTING OPERATION:
-        ##########################################################################################################################
+        ###############################################################################################################
         # - this will return new self.channelStorage (but still without waterBodyStorage)
         # - also, this will return self.Q which is channel discharge in m3/day
         #
         if self.method == "accuTravelTime":          self.accuTravelTime() 		
-        if self.method == "simplifiedKinematicWave": self.simplifiedKinematicWave(meteo, 0.0,0.0) 		
+        if self.method == "simplifiedKinematicWave": self.simplifiedKinematicWave(meteo, 0.0, 0.0)
         #
         # channel discharge (m3/s): for current time step
         #
         self.discharge = self.Q / vos.secondsPerDay()
-        self.discharge = pcr.max(0., self.discharge)                   # reported channel discharge cannot be negative
+        self.discharge = pcr.max(0., self.discharge)  # reported channel discharge cannot be negative
         self.discharge = pcr.ifthen(self.landmask, self.discharge)
         #
         self.disChanWaterBody = pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
@@ -2376,9 +2362,9 @@ class Routing(object):
         self.disChanWaterBody = pcr.cover(self.disChanWaterBody, self.discharge)
         self.disChanWaterBody = pcr.ifthen(self.landmask, self.disChanWaterBody)
         #
-        self.disChanWaterBody = pcr.max(0.,self.disChanWaterBody)      # reported channel discharge cannot be negative
+        self.disChanWaterBody = pcr.max(0.,self.disChanWaterBody)  # reported channel discharge cannot be negative
         #
-        ##########################################################################################################################
+        ###############################################################################################################
 
         self.allow_extra_evaporation_and_abstraction = False  # This option is still EXPERIMENTAL (and not recommended)
         if self.allow_extra_evaporation_and_abstraction:
@@ -2398,38 +2384,37 @@ class Routing(object):
         #   then, we add more evaporation
         #
         if (currTimeStep.day == 1) or (currTimeStep.timeStepPCR == 1):
-            waterKC = vos.netcdf2PCRobjClone(self.fileCropKC,'kc', \
-                               currTimeStep.fulldate, useDoy = 'month',\
-                                       cloneMapFileName = self.cloneMap)
-            self.waterKC = pcr.ifthen(self.landmask,\
-                           pcr.cover(waterKC, 0.0))
+            waterKC = vos.netcdf2PCRobjClone(self.fileCropKC, 'kc',
+                                             currTimeStep.fulldate,
+                                             useDoy='month',
+                                             cloneMapFileName=self.cloneMap)
+            self.waterKC = pcr.ifthen(self.landmask, pcr.cover(waterKC, 0.0))
             self.waterKC = pcr.max(self.minCropWaterKC, self.waterKC)
             
-        # potential evaporation from water bodies (m/day)) - reduced by evaporation that has been calculated in the landSurface module
-        waterBodyPotEvapOvesSurfaceWaterArea = pcr.ifthen(self.landmask, \
-                                               pcr.max(0.0,\
-                                               self.waterKC * meteo.referencePotET)) ##TODO -\
-        ## TODO check                                       landSurface.actualET ))              # These values are NOT over the entire cell area.
+        # potential evaporation from water bodies (m/day))
+        # - reduced by evaporation that has been calculated in the landSurface module
+        waterBodyPotEvapOverSurfaceWaterArea = \
+            pcr.ifthen(self.landmask, pcr.max(0.0, self.waterKC * meteo.referencePotET))
+        # TODO -landSurface.actualET ))  # These values are NOT over the entire cell area.
         
         # potential evaporation from water bodies over the entire cell area (m/day)
-        waterBodyPotEvap = waterBodyPotEvapOvesSurfaceWaterArea * self.dynamicFracWat
+        waterBodyPotEvap = waterBodyPotEvapOverSurfaceWaterArea * self.dynamicFracWat
         return waterBodyPotEvap
         
     def calculate_evaporation_routing_only(self, currTimeStep, meteo):
 
-        # calculate potential evaporation from water bodies OVER THE ENTIRE CELL AREA (m/day) ; not only over surface water bodies
+        # calculate potential evaporation from water bodies OVER THE ENTIRE CELL AREA (m/day);
+        # not only over surface water bodies
         self.waterBodyPotEvap = self.calculate_potential_evaporation_routing_only(currTimeStep,meteo)
         
         # evaporation volume from water bodies (m3)
         # - not limited to available channelStorage 
         volLocEvapWaterBody = self.waterBodyPotEvap * self.cellArea
         # - limited to available channelStorage
-        volLocEvapWaterBody = pcr.min(\
-                              pcr.max(0.0,self.channelStorage), volLocEvapWaterBody)
+        volLocEvapWaterBody = pcr.min(pcr.max(0.0,self.channelStorage), volLocEvapWaterBody)
 
         # update channelStorage (m3) after evaporation from water bodies
-        self.channelStorage = self.channelStorage -\
-                              volLocEvapWaterBody
+        self.channelStorage = self.channelStorage - volLocEvapWaterBody
         self.local_input_to_surface_water -= volLocEvapWaterBody
         
         # evaporation (m) from water bodies                             
@@ -2462,6 +2447,7 @@ class Routing(object):
         self.correctPrecip = pcr.scalar(0.0)
 
         self.dynamicFracWatBeforeRouting = self.dynamicFracWat
+        # Update dynamic fraction to dynamicFracWat for water bodies; 0.001 otherwise
         self.dynamicFracWat = pcr.max(self.dynamicFracWat, 0.001)
 
         landT = pcr.cover(self.directRunoff/landRunoff *
@@ -2470,23 +2456,31 @@ class Routing(object):
                           pcr.max(self.iceThresTemp+0.1, self.temperatureKelvin) +
                           self.baseflow/landRunoff *
                           pcr.max(self.iceThresTemp+5.0, self.annualT), self.temperatureKelvin)
+
         iceHeatTransfer = self.heatTransferIce * (self.temperatureKelvin - self.iceThresTemp)
         waterHeatTransfer = self.heatTransferIce * (self.iceThresTemp - self.waterTemp)
+
         noIce = pcr.ifthenelse(self.iceThickness > 0, pcr.boolean(0),
                                pcr.ifthenelse(((iceHeatTransfer-waterHeatTransfer) < 0) &
                                               (self.temperatureKelvin < self.iceThresTemp),
                                               pcr.boolean(0), pcr.boolean(1)))
+
         waterHeatTransfer = pcr.ifthenelse(noIce, self.heatTransferWater * (self.temperatureKelvin - self.waterTemp),
                                            waterHeatTransfer)
+
         radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.radiationShort
-        radiativHeatTransfer = radiativHeatTransfer - self.stefanBoltzman * \
-                               (pcr.ifthenelse(noIce, self.waterTemp, self.iceThresTemp)**4 -
-                                self.atmosEmis * self.temperatureKelvin**4)
+        radiativHeatTransfer =\
+            radiativHeatTransfer - self.stefanBoltzman *\
+            (pcr.ifthenelse(noIce,self.waterTemp, self.iceThresTemp)**4 - self.atmosEmis * self.temperatureKelvin**4)
+
         advectedEnergyPrecip = pcr.max(0, self.correctPrecip) *\
                                pcr.max(self.iceThresTemp + 0.1, self.temperatureKelvin-self.deltaTPrec) * \
                                self.specificHeatWater * self.densityWater / timeSec
+
+        # (cell_area-water_area)/water_area calculated as (1-dynFracWat)/dynFracWat
         advectedEnergyInflow = (1-self.dynamicFracWat)/self.dynamicFracWat * landRunoff * landT * \
                                self.specificHeatWater * self.densityWater / timeSec
+
         # ice formation
         # DSHI:     net flux for ice layer [W/m2]
         # wi:       thickness of ice cover [m]
@@ -2565,15 +2559,23 @@ class Routing(object):
         self.WaterBodies.getThermoClineDepth()
         self.WaterBodies.getThermoClineStorage()
         energyTotal = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-         pcr.areatotal(pcr.ifthen(self.landmask,self.totEW * self.dynamicFracWat * self.cellArea),\
-         pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))), self.totEW * self.dynamicFracWat * self.cellArea)
-        self.hypolimnionEnergy = pcr.cover(self.WaterBodies.hypolimnionStorage * hypolimnionTemperature * self.specificHeatWater * self.densityWater, 0.0)
+         pcr.areatotal(pcr.ifthen(self.landmask,self.totEW * self.dynamicFracWat * self.cellArea),
+                       pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))),
+                            self.totEW * self.dynamicFracWat * self.cellArea)
+        self.hypolimnionEnergy = pcr.cover(self.WaterBodies.hypolimnionStorage * hypolimnionTemperature *
+                                           self.specificHeatWater * self.densityWater, 0.0)
         activeEnergy = pcr.cover(energyTotal-self.hypolimnionEnergy, energyTotal)
-        activeStorage = pcr.ifthenelse(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage, self.waterBodyStorageTimeBefore)
-        self.routableEnergyFraction = pcr.cover((energyTotal-self.hypolimnionEnergy)/energyTotal*(self.waterBodyStorageTimeBefore/(self.waterBodyStorageTimeBefore-self.WaterBodies.hypolimnionStorage)), 1.0)
+        activeStorage = pcr.ifthenelse(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                                       self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage,
+                                       self.waterBodyStorageTimeBefore)
+        self.routableEnergyFraction = pcr.cover((energyTotal-self.hypolimnionEnergy)/
+                                                energyTotal*(self.waterBodyStorageTimeBefore/
+                                                             (self.waterBodyStorageTimeBefore-
+                                                              self.WaterBodies.hypolimnionStorage)), 1.0)
         self.hypolimnionFraction = self.WaterBodies.hypolimnionStorage/self.waterBodyStorageTimeBefore
         self.test1 = self.hypolimnionFraction
-        self.surfaceWaterTemperature = (energyTotal*self.routableEnergyFraction)/(self.waterBodyStorageTimeBefore)/(self.specificHeatWater*self.densityWater)
+        self.surfaceWaterTemperature = (energyTotal*self.routableEnergyFraction)/(self.waterBodyStorageTimeBefore)/\
+                                       (self.specificHeatWater*self.densityWater)
         self.test2 = self.routableEnergyFraction
         self.test3 = self.surfaceWaterTemperature
         self.test4 = energyTotal

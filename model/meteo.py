@@ -15,7 +15,7 @@ import scipy.stats
 
 class Meteo(object):
 
-    def __init__(self,iniItems,landmask,spinUp):
+    def __init__(self, iniItems, landmask, spinUp):
         object.__init__(self)
 
         self.cloneMap = iniItems.cloneMap
@@ -184,12 +184,12 @@ class Meteo(object):
         if 'meteoDownscalingOptions' in iniItems.allSections:
 
             # downscaling options
-            if iniItems.meteoDownscalingOptions['downscalePrecipitation']  == "True":
-                self.downscalePrecipitationOption  = True  
+            if iniItems.meteoDownscalingOptions['downscalePrecipitation'] == "True":
+                self.downscalePrecipitationOption = True
                 logger.info("Precipitation forcing will be downscaled to the cloneMap resolution.")
 
-            if iniItems.meteoDownscalingOptions['downscaleTemperature']    == "True":
-                self.downscaleTemperatureOption    = True  
+            if iniItems.meteoDownscalingOptions['downscaleTemperature'] == "True":
+                self.downscaleTemperatureOption = True
                 logger.info("Temperature forcing will be downscaled to the cloneMap resolution.")
 
             if iniItems.meteoDownscalingOptions['downscaleReferenceETPot'] == "True" and self.refETPotMethod != 'Hamon':
@@ -197,41 +197,43 @@ class Meteo(object):
                 logger.info("Reference potential evaporation will be downscaled to the cloneMap resolution.")
 
             # Note that for the Hamon method: referencePotET will be calculated based on temperature,  
-            # therefore, we do not have to downscale it (particularly if temperature is already provided at high resolution). 
+            # therefore, we do not have to downscale it (particularly if temperature is already
+            # provided at high resolution).
 
-        if self.downscalePrecipitationOption or\
-           self.downscaleTemperatureOption   or\
-           self.downscaleReferenceETPotOption:
+        if self.downscalePrecipitationOption or self.downscaleTemperatureOption or self.downscaleReferenceETPotOption:
 
             # creating anomaly DEM
-            highResolutionDEM = vos.readPCRmapClone(\
-               iniItems.meteoDownscalingOptions['highResolutionDEM'],
-               self.cloneMap,self.tmpDir,self.inputDir)
+            highResolutionDEM = vos.readPCRmapClone(iniItems.meteoDownscalingOptions['highResolutionDEM'],
+                                                    self.cloneMap,
+                                                    self.tmpDir,
+                                                    self.inputDir)
             highResolutionDEM = pcr.cover(highResolutionDEM, 0.0)
             highResolutionDEM = pcr.max(highResolutionDEM, 0.0)
-            self.meteoDownscaleIds = vos.readPCRmapClone(\
-               iniItems.meteoDownscalingOptions['meteoDownscaleIds'],
-               self.cloneMap,self.tmpDir,self.inputDir,isLddMap=False,cover=None,isNomMap=True)
-            self.cellArea = vos.readPCRmapClone(\
-               iniItems.routingOptions['cellAreaMap'],
-               self.cloneMap,self.tmpDir,self.inputDir)
-            loweResolutionDEM = pcr.areatotal(pcr.cover(highResolutionDEM*self.cellArea, 0.0),\
+            self.meteoDownscaleIds = vos.readPCRmapClone(iniItems.meteoDownscalingOptions['meteoDownscaleIds'],
+                                                         self.cloneMap,
+                                                         self.tmpDir,
+                                                         self.inputDir,
+                                                         isLddMap=False,
+                                                         cover=None,
+                                                         isNomMap=True)
+            self.cellArea = vos.readPCRmapClone(iniItems.routingOptions['cellAreaMap'],
+                                                self.cloneMap, self.tmpDir, self.inputDir)
+            loweResolutionDEM = pcr.areatotal(pcr.cover(highResolutionDEM*self.cellArea, 0.0),
                                               self.meteoDownscaleIds)/\
-                                pcr.areatotal(pcr.cover(self.cellArea, 0.0),\
-                                              self.meteoDownscaleIds)                  
-            self.anomalyDEM = highResolutionDEM - loweResolutionDEM    # unit: meter  
+                                pcr.areatotal(pcr.cover(self.cellArea, 0.0), self.meteoDownscaleIds)
+            self.anomalyDEM = highResolutionDEM - loweResolutionDEM    # unit: metre
 
             # temperature lapse rate (netCDF) file 
-            self.temperLapseRateNC = vos.getFullPath(iniItems.meteoDownscalingOptions[\
-                                        'temperLapseRateNC'],self.inputDir)                         
-            self.temperatCorrelNC  = vos.getFullPath(iniItems.meteoDownscalingOptions[\
-                                        'temperatCorrelNC'],self.inputDir)                    # TODO: Remove this criteria.                         
+            self.temperLapseRateNC = vos.getFullPath(iniItems.meteoDownscalingOptions['temperLapseRateNC'],
+                                                     self.inputDir)
+            self.temperatCorrelNC = vos.getFullPath(iniItems.meteoDownscalingOptions['temperatCorrelNC'],
+                                                    self.inputDir)              # TODO: Remove this criteria.
 
             # precipitation lapse rate (netCDF) file 
-            self.precipLapseRateNC = vos.getFullPath(iniItems.meteoDownscalingOptions[\
-                                        'precipLapseRateNC'],self.inputDir)
-            self.precipitCorrelNC  = vos.getFullPath(iniItems.meteoDownscalingOptions[\
-                                        'precipitCorrelNC'],self.inputDir)                    # TODO: Remove this criteria.                           
+            self.precipLapseRateNC = vos.getFullPath(iniItems.meteoDownscalingOptions['precipLapseRateNC'],
+                                                     self.inputDir)
+            self.precipitCorrelNC = vos.getFullPath(iniItems.meteoDownscalingOptions['precipitCorrelNC'],
+                                                    self.inputDir)              # TODO: Remove this criteria.
 
         else:
             logger.info("No forcing downscaling is implemented.")
@@ -243,10 +245,11 @@ class Meteo(object):
 
             if float(iniItems.meteoDownscalingOptions['smoothingWindowsLength']) > 0.0:
                 self.forcingSmoothing = True
-                self.smoothingWindowsLength = vos.readPCRmapClone(\
-                   iniItems.meteoDownscalingOptions['smoothingWindowsLength'],
-                   self.cloneMap,self.tmpDir,self.inputDir)
-                msg = "Forcing data are smoothed with 'windowaverage' using the window length:"+str(iniItems.meteoDownscalingOptions['smoothingWindowsLength'])
+                self.smoothingWindowsLength = vos.readPCRmapClone(
+                    iniItems.meteoDownscalingOptions['smoothingWindowsLength'],
+                    self.cloneMap, self.tmpDir, self.inputDir)
+                msg = "Forcing data are smoothed with 'windowaverage' using the window length:" +\
+                      str(iniItems.meteoDownscalingOptions['smoothingWindowsLength'])
                 logger.info(msg)   
  
     def perturb(self, name, **parameters):
@@ -267,29 +270,25 @@ class Meteo(object):
         #TODO: calculate  referencePotET
         pass
 
-    def downscalePrecipitation(self, currTimeStep, useFactor = True, minCorrelationCriteria = 0.85):
+    def downscalePrecipitation(self, currTimeStep, useFactor=True, minCorrelationCriteria=0.85):
         
-        preSlope = 0.001 * vos.netcdf2PCRobjClone(\
-                           self.precipLapseRateNC,"precipitation",\
-                           currTimeStep.month, useDoy = "Yes",\
-                           cloneMapFileName=self.cloneMap,\
-                           LatitudeLongitude = True)
+        preSlope = 0.001 * vos.netcdf2PCRobjClone(self.precipLapseRateNC, "precipitation",
+                                                  currTimeStep.month, useDoy="Yes",
+                                                  cloneMapFileName=self.cloneMap,
+                                                  LatitudeLongitude=True)
         preSlope = pcr.cover(preSlope, 0.0)
         preSlope = pcr.max(0.,preSlope)
         
-        preCriteria = vos.netcdf2PCRobjClone(\
-                     self.precipitCorrelNC,"precipitation",\
-                     currTimeStep.month, useDoy = "Yes",\
-                     cloneMapFileName=self.cloneMap,\
-                     LatitudeLongitude = True)
-        preSlope = pcr.ifthenelse(preCriteria > minCorrelationCriteria,\
-                   preSlope, 0.0)             
+        preCriteria = vos.netcdf2PCRobjClone(self.precipitCorrelNC, "precipitation",
+                                             currTimeStep.month, useDoy="Yes",
+                                             cloneMapFileName=self.cloneMap,
+                                             LatitudeLongitude=True)
+        preSlope = pcr.ifthenelse(preCriteria > minCorrelationCriteria, preSlope, 0.0)
         preSlope = pcr.cover(preSlope, 0.0)
     
         if useFactor == True:
-            factor = pcr.max(0.,self.precipitation + preSlope*self.anomalyDEM)
-            factor = factor / \
-                     pcr.areaaverage(factor, self.meteoDownscaleIds)
+            factor = pcr.max(0., self.precipitation + preSlope*self.anomalyDEM)
+            factor = factor / pcr.areaaverage(factor, self.meteoDownscaleIds)
             factor = pcr.cover(factor, 1.0)
             self.precipitation = factor * self.precipitation
         else:
@@ -297,28 +296,25 @@ class Meteo(object):
 
         self.precipitation = pcr.max(0.0, self.precipitation)
 
-    def downscaleTemperature(self, currTimeStep, useFactor = False, maxCorrelationCriteria = -0.75, zeroCelciusInKelvin = 273.15):
+    def downscaleTemperature(self, currTimeStep, useFactor=False, maxCorrelationCriteria=-0.75,
+                             zeroCelciusInKelvin=273.15):
         
-        tmpSlope = 1.000 * vos.netcdf2PCRobjClone(\
-                           self.temperLapseRateNC,"temperature",\
-                           currTimeStep.month, useDoy = "Yes",\
-                           cloneMapFileName=self.cloneMap,\
-                           LatitudeLongitude = True)
-        tmpSlope = pcr.min(0.,tmpSlope)  # must be negative
-        tmpCriteria = vos.netcdf2PCRobjClone(\
-                      self.temperatCorrelNC,"temperature",\
-                      currTimeStep.month, useDoy = "Yes",\
-                      cloneMapFileName=self.cloneMap,\
-                      LatitudeLongitude = True)
-        tmpSlope = pcr.ifthenelse(tmpCriteria < maxCorrelationCriteria,\
-                   tmpSlope, 0.0)             
+        tmpSlope = 1.000 * vos.netcdf2PCRobjClone(self.temperLapseRateNC, "temperature",
+                                                  currTimeStep.month, useDoy="Yes",
+                                                  cloneMapFileName=self.cloneMap,
+                                                  LatitudeLongitude=True)
+        tmpSlope = pcr.min(0., tmpSlope)  # must be negative
+        tmpCriteria = vos.netcdf2PCRobjClone(self.temperatCorrelNC, "temperature",
+                                             currTimeStep.month, useDoy="Yes",
+                                             cloneMapFileName=self.cloneMap,
+                                             LatitudeLongitude=True)
+        tmpSlope = pcr.ifthenelse(tmpCriteria < maxCorrelationCriteria, tmpSlope, 0.0)
         tmpSlope = pcr.cover(tmpSlope, 0.0)
     
         if useFactor == True:
             temperatureInKelvin = self.temperature + zeroCelciusInKelvin
             factor = pcr.max(0.0, temperatureInKelvin + tmpSlope * self.anomalyDEM)
-            factor = factor / \
-                     pcr.areaaverage(factor, self.meteoDownscaleIds)
+            factor = factor / pcr.areaaverage(factor, self.meteoDownscaleIds)
             factor = pcr.cover(factor, 1.0)
             self.temperature = factor * temperatureInKelvin - zeroCelciusInKelvin
         else:

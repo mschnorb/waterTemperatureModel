@@ -579,9 +579,9 @@ class WaterBodies(object):
         self.dynamicArea = pcr.min(self.dynamicArea, self.waterBodyArea)
 
         # dynamic water fraction in grid cell
-        self.dynamicFracWat = self.dynamicArea * self.waterBodyRelativeFrac / self.cellArea  #TODO check if this is correct
+        self.dynamicFracWat = self.dynamicArea * self.waterBodyRelativeFrac / self.cellArea  # TODO check if this is correct
         self.dynamicFracWat = pcr.cover(pcr.min(pcr.max(self.dynamicFracWat, 0.), self.fracWat), 0.)
-        self.dynamicFracWat = self.fracWat  #TODO remove this line
+        #self.dynamicFracWat = self.fracWat  # TODO remove this line
         self.dynamicFracWat = ifthen(self.landmask, self.dynamicFracWat)
 
         self.maxWaterDepth = pcr.cover(pcr.ifthenelse(pcr.scalar(self.waterBodyTyp) == 1, lakeMaxDepth,

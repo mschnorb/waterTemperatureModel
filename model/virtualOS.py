@@ -894,32 +894,30 @@ def getValFloatDivZero(x,y,y_lim,z_def= 0.):
   else:
     return z_def
 
-def retrieveMapValue(pcrX,coordinates):
-    #-retrieves values from a map and returns an array conform the IDs stored in properties
-    nrRows= coordinates.shape[0]
-    x= np.ones((nrRows))* MV
-    tmpIDArray= pcr.pcr2numpy(pcrX,MV)
+def retrieveMapValue(pcrX, coordinates):
+    # -retrieves values from a map and returns an array conform the IDs stored in properties
+    nrRows = coordinates.shape[0]
+    x = np.ones((nrRows))* MV
+    tmpIDArray= pcr.pcr2numpy(pcrX, MV)
     for iCnt in xrange(nrRows):
-      row,col= coordinates[iCnt,:]
-      if row != MV and col != MV:
-        x[iCnt]= tmpIDArray[row,col]
+        row,col= coordinates[iCnt, :]
+        if row != MV and col != MV:
+            x[iCnt] = tmpIDArray[row, col]
     return x
 
-def returnMapValue(pcrX,x,coord):
-    #-retrieves value from an array and update values in the map
+def returnMapValue(pcrX, x, coord):
+    # -retrieves value from an array and update values in the map
     if x.ndim == 1:
-      nrRows= 1
+      nrRows = 1
 
-    tempIDArray= pcr.pcr2numpy(pcrX,MV)
-    #print tempIDArray
-    temporary= tempIDArray
-    nrRows= coord.shape[0]
+    tempIDArray = pcr.pcr2numpy(pcrX, MV)
+    temporary = tempIDArray
+    nrRows = coord.shape[0]
     for iCnt in xrange(nrRows):
-      row,col= coord[iCnt,:]
-      if row != MV and col != MV:
-        tempIDArray[row,col]= (x[iCnt])
-       # print iCnt,row,col,x[iCnt]
-    pcrX= pcr.numpy2pcr(pcr.Scalar,tempIDArray,MV)
+        row, col = coord[iCnt, :]
+        if row != MV and col != MV:
+            tempIDArray[row, col] = (x[iCnt])
+    pcrX = pcr.numpy2pcr(pcr.Scalar,tempIDArray, MV)
     return pcrX
 
 def getQAtBasinMouths(discharge, basinMouth):
@@ -1103,7 +1101,7 @@ def swapRows(a):
     #-swaps an array upside-down
     b = a.copy()
     for rowCnt in xrange(a.shape[0]):
-        revRowCnt= a.shape[0]-(rowCnt+1)
-        b[revRowCnt,:]= a[rowCnt,:]
+        revRowCnt = a.shape[0]-(rowCnt+1)
+        b[revRowCnt, :] = a[rowCnt, :]
     return b
 
