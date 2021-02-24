@@ -1,4 +1,5 @@
 ~/
 *.pyc
 model/*.pyc
-model/__pycache__/*
+model/__pycache__/
+model/~/
