@@ -7,19 +7,17 @@ This "reporting.py" module is not the same as the one module initiated by Niels 
 '''
 
 import os
-
 import logging
 logger = logging.getLogger(__name__)
-
 import pcraster as pcr
-
 from ncConverter import *
 
 import variable_list as varDicts
 
+
 class Reporting(object):
 
-    #list of all output variables
+    # list of all output variables
     
     def __init__(self, configuration, model, modelTime, sampleNumber=None):
         self._model = model
@@ -27,10 +25,10 @@ class Reporting(object):
 
         # output directory storing netcdf files:
         self.outNCDir = str(configuration.outNCDir)
-        if sampleNumber != None:
-            self.outNCDir = self.outNCDir+str(sampleNumber)+"/"
+        if sampleNumber is not None:
+            self.outNCDir = self.outNCDir+str(sampleNumber) + "/"
             os.mkdir(self.outNCDir)
-            logger.info("Creating folder "+str(sampleNumber)+" in netcdf output directory")
+            logger.info("Creating folder " + str(sampleNumber) + " in netcdf output directory")
         print(self.outNCDir)
         # object for reporting:
         self.netcdfObj = PCR2netCDF(configuration)
@@ -52,17 +50,16 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
                 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+ \
-                                            str(var)+\
-                                            "_dailyTot_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + str(var) + "_dailyTot_output.nc",
+                                            short_name, unit, long_name)
 
         #
         # - SubSeasonal output in netCDF files:
-        # -- cummulative
+        # -- cumulative
         self.outSeasoTotNC = ["None"]
         try:
             self.outSeasoTotNC = configuration.reportingOptions['outSeasoTotNC'].split(",")
@@ -82,10 +79,8 @@ class Reporting(object):
                 if long_name == None: long_name = short_name  
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_seasoTot_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_seasoTot_output.nc",
+                                            short_name, unit, long_name)
         #
         # -- average
         self.outSeasoAvgNC = ["None"]
@@ -108,13 +103,12 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_seasoAvg_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_seasoAvg_output.nc",
+                                            short_name, unit, long_name)
         #
         # -- last day of the month
         self.outSeasoEndNC = ["None"]
@@ -131,16 +125,15 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_seasoEnd_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_seasoEnd_output.nc",
+                                            short_name, unit, long_name)
         #
         # - MONTHly output in netCDF files:
-        # -- cummulative
+        # -- cumulative
         self.outMonthTotNC = ["None"]
         try:
             self.outMonthTotNC = configuration.reportingOptions['outMonthTotNC'].split(",")
@@ -157,13 +150,12 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_monthly_total_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_monthTot_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_monthTot_output.nc",
+                                            short_name, unit, long_name)
         #
         # -- average
         self.outMonthAvgNC = ["None"]
@@ -186,13 +178,12 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_monthAvg_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_monthAvg_output.nc",
+                                            short_name, unit, long_name)
         #
         # -- last day of the month
         self.outMonthEndNC = ["None"]
@@ -209,16 +200,15 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_monthEnd_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_monthEnd_output.nc",
+                                            short_name, unit, long_name)
         #
         # - YEARly output in netCDF files:
-        # -- cummulative
+        # -- cumulative
         self.outAnnuaTotNC = ["None"]
         try:
             self.outAnnuaTotNC = configuration.reportingOptions['outAnnuaTotNC'].split(",")
@@ -236,13 +226,12 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_yearly_total_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_annuaTot_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir+"/" + str(var) + "_annuaTot_output.nc",
+                                            short_name, unit, long_name)
         #
         # -- average
         self.outAnnuaAvgNC = ["None"]
@@ -265,13 +254,12 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_annuaAvg_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_annuaAvg_output.nc",
+                                            short_name, unit, long_name)
         #
         # -- last day of the year
         self.outAnnuaEndNC = ["None"]
@@ -288,13 +276,12 @@ class Reporting(object):
                 short_name = varDicts.netcdf_short_name[var]
                 unit       = varDicts.netcdf_unit[var]      
                 long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
-                self.netcdfObj.createNetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_annuaEnd_output.nc",\
-                                            short_name,unit,long_name)
+                self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_annuaEnd_output.nc",
+                                            short_name, unit, long_name)
         
         # list of variables that will be reported:
         self.variables_for_report = self.outDailyTotNC +\
@@ -323,12 +310,9 @@ class Reporting(object):
         self.waterBodyActEvaporation = self._model.routing.waterBodyEvaporation
         self.waterBodyPotEvaporation = self._model.routing.waterBodyPotEvap
         #
-        self.fractionWaterBodyEvaporation = vos.getValDivZero(self.waterBodyActEvaporation,\
-                                                              self.waterBodyPotEvaporation,\
+        self.fractionWaterBodyEvaporation = vos.getValDivZero(self.waterBodyActEvaporation,
+                                                              self.waterBodyPotEvaporation,
                                                               vos.smallNumber)
-        # total evaporation (m), from land and water fractions
-        ## TODO self.totalEvaporation = self._model.landSurface.actualET + \
-        ## TODO                        self._model.routing.waterBodyEvaporation
         
         # runoff (m) from land surface - not including local changes in water bodies
         self.runoff = self._model.routing.runoff
@@ -338,18 +322,12 @@ class Reporting(object):
         
         # dynamic flooded fraction (-)
         self.dynamicFracWat = self._model.routing.dynamicFracWat
-        
-        # water temperature (K)
-        #self.waterTemp = self._model.routing.waterTemp
  
         # channel storage (K)
         self.channelStorage = self._model.routing.channelStorage
 
         # water height (K)
         self.waterHeight = self._model.routing.water_height
-       
-        # ice thickness (K)
-        #self.iceThickness = self._model.routing.iceThickness
 
     def additional_post_processing(self):
         # In this method/function, users can add their own post-processing.
@@ -368,30 +346,38 @@ class Reporting(object):
 
         # accumulated runoff (m3/s) along the drainage network - not including local changes in water bodies
         if "accuRunoff" in self.variables_for_report:
-            self.accuRunoff = pcr.catchmenttotal(self.runoff * self._model.routing.cellArea, self._model.routing.lddMap) / vos.secondsPerDay()
+            self.accuRunoff =\
+                pcr.catchmenttotal(self.runoff * self._model.routing.cellArea, self._model.routing.lddMap) /\
+                vos.secondsPerDay()
         
         # accumulated baseflow (m3) along the drainage network
         if "accuBaseflow" in self.variables_for_report:
-            self.accuBaseflow = pcr.catchmenttotal(self.baseflow * self._model.routing.cellArea, self._model.routing.lddMap)
+            self.accuBaseflow = pcr.catchmenttotal(self.baseflow * self._model.routing.cellArea,
+                                                   self._model.routing.lddMap)
 
         # local changes in water bodies (i.e. abstraction, return flow, evaporation, bed exchange), excluding runoff
-        self.local_water_body_flux = self._model.routing.local_input_to_surface_water / self._model.routing.cellArea - self.runoff
+        self.local_water_body_flux = self._model.routing.local_input_to_surface_water /\
+                                     self._model.routing.cellArea - self.runoff
         
-        # total runoff (m) from local land surface runoff and local changes in water bodies 
-        self.totalRunoff = self.runoff + self.local_water_body_flux     # actually this is equal to self._model.routing.local_input_to_surface_water / self._model.routing.cellArea
+        # total runoff (m) from local land surface runoff and local changes in water bodies
+        # actually this is equal to self._model.routing.local_input_to_surface_water / self._model.routing.cellArea
+        self.totalRunoff = self.runoff + self.local_water_body_flux
         
         # accumulated total runoff (m3) along the drainage network - not including local changes in water bodies
         if "accuTotalRunoff" in self.variables_for_report:
-            self.accuTotalRunoff = pcr.catchmenttotal(self.totalRunoff * self._model.routing.cellArea, self._model.routing.lddMap) / vos.secondsPerDay()
+            self.accuTotalRunoff = pcr.catchmenttotal(self.totalRunoff * self._model.routing.cellArea,
+                                                      self._model.routing.lddMap) / vos.secondsPerDay()
 
         # surfaceWaterStorage (unit: m) - negative values may be reported
         self.surfaceWaterStorage = self._model.routing.channelStorage / self._model.routing.cellArea
 
         # Stefanie's post processing: reporting lake and reservoir storage (unit: m3)
-        self.waterBodyStorage = pcr.ifthen(self._model.routing.landmask, \
-                                pcr.ifthen(\
-                                pcr.scalar(self._model.routing.WaterBodies.waterBodyIds) > 0.,\
-                                           self._model.routing.WaterBodies.waterBodyStorage))     # Note: This value is after lake/reservoir outflow.
+        # Note: This value is after lake/reservoir outflow.
+        self.waterBodyStorage =\
+            pcr.ifthen(self._model.routing.landmask,
+                       pcr.ifthen(
+                           pcr.scalar(self._model.routing.WaterBodies.waterBodyIds) > 0.,
+                           self._model.routing.WaterBodies.waterBodyStorage))
         #
         
     def report(self):
@@ -399,230 +385,166 @@ class Reporting(object):
         self.post_processing()
 
         # time stamp for reporting
-        timeStamp = datetime.datetime(self._modelTime.year,\
-                                      self._modelTime.month,\
-                                      self._modelTime.day,\
+        timeStamp = datetime.datetime(self._modelTime.year,
+                                      self._modelTime.month,
+                                      self._modelTime.day,
                                       0)
 
         # writing daily output to netcdf files
         if self.outDailyTotNC[0] != "None":
             for var in self.outDailyTotNC:
-                
                 short_name = varDicts.netcdf_short_name[var]
-                self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                            "_dailyTot_output.nc",\
-                                            short_name,\
-                  pcr2numpy(self.__getattribute__(var),vos.MV),\
-                                            timeStamp)
+                self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_dailyTot_output.nc",
+                                           short_name,
+                                           pcr2numpy(self.__getattribute__(var), vos.MV),
+                                           timeStamp)
 
         # writing sub-season output to netcdf files
-        # - cummulative
+        # - cumulative
         if self.outSeasoTotNC[0] != "None":
             for var in self.outSeasoTotNC:
-
                 # introduce variables at the beginning of simulation or
                 #     reset variables at the beginning of the month
-                if self._modelTime.timeStepPCR == 1 or \
-                   self._modelTime.day == 1 or \
-                   self._modelTime.day == 16:\
-                   vars(self)[var+'SeasoTot'] = pcr.scalar(0.0)
-
+                if self._modelTime.timeStepPCR == 1 or self._modelTime.day == 1 or self._modelTime.day == 16:
+                    vars(self)[var + 'SeasoTot'] = pcr.scalar(0.0)
                 # accumulating
-                vars(self)[var+'SeasoTot'] += vars(self)[var]
-
+                vars(self)[var + 'SeasoTot'] += vars(self)[var]
                 # reporting at the end of the month:
-                if self._modelTime.endSubSeason == True: 
-
+                if self._modelTime.endSubSeason == True:
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                               "_seasoTot_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var+'SeasoTot'),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" +str(var) + "_seasoTot_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var + 'SeasoTot'), vos.MV),
+                                               timeStamp)
         #
         # - average
         if self.outSeasoAvgNC[0] != "None":
             for var in self.outSeasoAvgNC:
-
                 # only if a accumulator variable has not been defined: 
-                if var not in self.outSeasoTotNC: 
-
+                if var not in self.outSeasoTotNC:
                     # introduce accumulator at the beginning of simulation or
                     #     reset accumulator at the beginning of the month
-                    if self._modelTime.timeStepPCR == 1 or \
-                       self._modelTime.day == 1 or \
-                       self._modelTime.day == 16:\
-                       vars(self)[var+'SeasoTot'] = pcr.scalar(0.0)
-
+                    if self._modelTime.timeStepPCR == 1 or self._modelTime.day == 1 or self._modelTime.day == 16:\
+                        vars(self)[var+'SeasoTot'] = pcr.scalar(0.0)
                     # accumulating
                     vars(self)[var+'SeasoTot'] += vars(self)[var]
 
                 # calculating average & reporting at the end of the month:
-                if self._modelTime.endSubSeason == True:
-
-                    vars(self)[var+'SeasoAvg'] = vars(self)[var+'SeasoTot']/\
-                                                 self._modelTime.seasonLength  
-
+                if self._modelTime.endSubSeason:
+                    vars(self)[var+'SeasoAvg'] = vars(self)[var+'SeasoTot'] / self._modelTime.seasonLength
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_seasoAvg_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var+'SeasoAvg'),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_seasoAvg_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var + 'SeasoAvg'), vos.MV),
+                                               timeStamp)
         #
         # - last day of the month
         if self.outSeasoEndNC[0] != "None":
             for var in self.outSeasoEndNC:
-
                 # reporting at the end of the month:
-                if self._modelTime.endSubSeason == True: 
-
+                if self._modelTime.endSubSeason == True:
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_seasoEnd_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_seasoEnd_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var), vos.MV),
+                                               timeStamp)
 
         # writing monthly output to netcdf files
-        # - cummulative
+        # - cumulative
         if self.outMonthTotNC[0] != "None":
             for var in self.outMonthTotNC:
-
                 # introduce variables at the beginning of simulation or
                 #     reset variables at the beginning of the month
-                if self._modelTime.timeStepPCR == 1 or \
-                   self._modelTime.day == 1:\
-                   vars(self)[var+'MonthTot'] = pcr.scalar(0.0)
-
+                if self._modelTime.timeStepPCR == 1 or self._modelTime.day == 1:
+                    vars(self)[var + 'MonthTot'] = pcr.scalar(0.0)
                 # accumulating
-                vars(self)[var+'MonthTot'] += vars(self)[var]
-
+                vars(self)[var + 'MonthTot'] += vars(self)[var]
                 # reporting at the end of the month:
-                if self._modelTime.endMonth == True: 
-
+                if self._modelTime.endMonth:
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                            str(var)+\
-                                               "_monthTot_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var+'MonthTot'),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_monthTot_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var + 'MonthTot'), vos.MV),
+                                               timeStamp)
         #
         # - average
         if self.outMonthAvgNC[0] != "None":
             for var in self.outMonthAvgNC:
-
                 # only if a accumulator variable has not been defined: 
-                if var not in self.outMonthTotNC: 
-
+                if var not in self.outMonthTotNC:
                     # introduce accumulator at the beginning of simulation or
                     #     reset accumulator at the beginning of the month
-                    if self._modelTime.timeStepPCR == 1 or \
-                       self._modelTime.day == 1:\
-                       vars(self)[var+'MonthTot'] = pcr.scalar(0.0)
-
+                    if self._modelTime.timeStepPCR == 1 or self._modelTime.day == 1:
+                        vars(self)[var + 'MonthTot'] = pcr.scalar(0.0)
                     # accumulating
-                    vars(self)[var+'MonthTot'] += vars(self)[var]
+                    vars(self)[var + 'MonthTot'] += vars(self)[var]
 
                 # calculating average & reporting at the end of the month:
-                if self._modelTime.endMonth == True:
-
-                    vars(self)[var+'MonthAvg'] = vars(self)[var+'MonthTot']/\
-                                                 self._modelTime.day  
-
+                if self._modelTime.endMonth:
+                    vars(self)[var + 'MonthAvg'] = vars(self)[var + 'MonthTot']/self._modelTime.day
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_monthAvg_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var+'MonthAvg'),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/"+ str(var) + "_monthAvg_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var + 'MonthAvg'), vos.MV),
+                                               timeStamp)
         #
         # - last day of the month
         if self.outMonthEndNC[0] != "None":
             for var in self.outMonthEndNC:
-
                 # reporting at the end of the month:
-                if self._modelTime.endMonth == True: 
-
+                if self._modelTime.endMonth:
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_monthEnd_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_monthEnd_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var), vos.MV),
+                                               timeStamp)
 
         # writing yearly output to netcdf files
-        # - cummulative
+        # - cumulative
         if self.outAnnuaTotNC[0] != "None":
             for var in self.outAnnuaTotNC:
-
                 # introduce variables at the beginning of simulation or
                 #     reset variables at the beginning of the month
-                if self._modelTime.timeStepPCR == 1 or \
-                   self._modelTime.doy == 1:\
-                   vars(self)[var+'AnnuaTot'] = pcr.scalar(0.0)
-
+                if self._modelTime.timeStepPCR == 1 or self._modelTime.doy == 1:
+                    vars(self)[var + 'AnnuaTot'] = pcr.scalar(0.0)
                 # accumulating
-                vars(self)[var+'AnnuaTot'] += vars(self)[var]
-
+                vars(self)[var + 'AnnuaTot'] += vars(self)[var]
                 # reporting at the end of the year:
-                if self._modelTime.endYear == True: 
-
+                if self._modelTime.endYear:
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_annuaTot_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var+'AnnuaTot'),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_annuaTot_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var+'AnnuaTot'), vos.MV),
+                                               timeStamp)
 
         # - average
         if self.outAnnuaAvgNC[0] != "None":
             for var in self.outAnnuaAvgNC:
-
                 # only if a accumulator variable has not been defined: 
-                if var not in self.outAnnuaTotNC: 
-
+                if var not in self.outAnnuaTotNC:
                     # introduce accumulator at the beginning of simulation or
                     #     reset accumulator at the beginning of the year
-                    if self._modelTime.timeStepPCR == 1 or \
-                       self._modelTime.doy == 1:\
-                       vars(self)[var+'AnnuaTot'] = pcr.scalar(0.0)
-
+                    if self._modelTime.timeStepPCR == 1 or self._modelTime.doy == 1:
+                        vars(self)[var + 'AnnuaTot'] = pcr.scalar(0.0)
                     # accumulating
-                    vars(self)[var+'AnnuaTot'] += vars(self)[var]
+                    vars(self)[var + 'AnnuaTot'] += vars(self)[var]
 
                 # calculating average & reporting at the end of the year:
-                if self._modelTime.endYear == True:
-
-                    vars(self)[var+'AnnuaAvg'] = vars(self)[var+'AnnuaTot']/\
-                                                 self._modelTime.doy  
-
+                if self._modelTime.endYear:
+                    vars(self)[var + 'AnnuaAvg'] = vars(self)[var+'AnnuaTot']/self._modelTime.doy
                     short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_annuaAvg_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var+'AnnuaAvg'),\
-                       vos.MV),timeStamp)
+                    self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_annuaAvg_output.nc",
+                                               short_name,
+                                               pcr2numpy(self.__getattribute__(var+'AnnuaAvg'), vos.MV),
+                                               timeStamp)
         #
         # -last day of the year
         if self.outAnnuaEndNC[0] != "None":
             for var in self.outAnnuaEndNC:
-
-                    short_name = varDicts.netcdf_short_name[var]
-                    self.netcdfObj.data2NetCDF(self.outNCDir+"/"+ \
-                                               str(var)+\
-                                               "_annuaEnd_output.nc",\
-                                               short_name,\
-                      pcr2numpy(self.__getattribute__(var),\
-                       vos.MV),timeStamp)
+                short_name = varDicts.netcdf_short_name[var]
+                self.netcdfObj.data2NetCDF(self.outNCDir + "/" + str(var) + "_annuaEnd_output.nc",
+                                           short_name,
+                                           pcr2numpy(self.__getattribute__(var), vos.MV),
+                                           timeStamp)
 
         logger.info("reporting for time %s", self._modelTime.currTime)

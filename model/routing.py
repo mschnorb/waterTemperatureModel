@@ -32,20 +32,16 @@ class Routing(object):
     def getState(self):
         result = {}
         
-        result['timestepsToAvgDischarge']  = self.timestepsToAvgDischarge    # day 
-
+        result['timestepsToAvgDischarge']  = self.timestepsToAvgDischarge    # day
         result['channelStorage']           = self.channelStorage             #  m3     ; channel storage, including lake and reservoir storage 
         result['readAvlChannelStorage']    = self.readAvlChannelStorage      #  m3     ; readily available channel storage that can be extracted to satisfy water demand
         result['avgDischargeLong']         = self.avgDischarge               #  m3/s   ;  long term average discharge
         result['m2tDischargeLong']         = self.m2tDischarge               # (m3/s)^2
-        
         result['avgBaseflowLong']          = self.avgBaseflow                #  m3/s   ;  long term average baseflow
         result['riverbedExchange']         = self.riverbedExchange           #  m3/day : river bed infiltration (from surface water bdoies to groundwater)
-        
         result['waterBodyStorage']            = self.waterBodyStorage        #  m3     ; storages of lakes and reservoirs            # values given are per water body id (not per cell)
         result['avgLakeReservoirOutflowLong'] = self.avgOutflow              #  m3/s   ; long term average lake & reservoir outflow  # values given are per water body id (not per cell)
         result['avgLakeReservoirInflowShort'] = self.avgInflow               #  m3/s   ; short term average lake & reservoir inflow  # values given are per water body id (not per cell)
-
         result['avgDischargeShort']        = self.avgDischargeShort          #  m3/s   ; short term average discharge 
 
         # This variable needed only for kinematic wave methods (i.e. kinematicWave and simplifiedKinematicWave)
@@ -54,6 +50,7 @@ class Routing(object):
         if self.waterTemperature:
           result['waterTemperature']        = self.waterTemp                   #  C      ; water temperature
           result['iceThickness']        = self.iceThickness                    #  C      ; iceThickness
+
         return result
 
     def __init__(self, iniItems, initialConditions, lddMap):
@@ -93,7 +90,7 @@ class Routing(object):
         except:
             self.directRunoffRead = False
 
-        # TODO: 26 Feb 2014, Eshin found that reasonable runs are only found
+        # TODO: 26 Feb 2014, Edwin found that reasonable runs are only found
         # if all of these options = True.                    
         self.includeWaterBodies = True
         self.includeLakes = True
@@ -329,8 +326,7 @@ class Routing(object):
             self.heatTransferIce = pcr.scalar(8.0)
             self.albedoWater = pcr.scalar(0.15)
             self.albedoSnow = pcr.scalar(0.50)
-            # energy balance, proxy for temperature of groundwater store: mean annual temperature
-            # and reduction in the temperature for falling rain            
+            # reduction in the temperature for falling rain
             self.deltaTPrec = pcr.scalar(1.5)
             # stefan-boltzman constant [W/m2/K]
             self.stefanBoltzman = 5.67e-8
@@ -338,10 +334,6 @@ class Routing(object):
             self.radShortFileNC = iniItems.meteoOptions['radiationShortNC']
             self.vapFileNC = iniItems.meteoOptions['vaporNC']
             self.annualTNC = iniItems.meteoOptions['annualAvgTNC']
-            # Annual temperature climatology
-            #self.annualT = vos.netcdf2PCRobjCloneWithoutTime(iniItems.meteoOptions['annualAvgTNC'],
-            #                                                 "temperature",
-            #                                                 cloneMapFileName=self.cloneMap) + pcr.scalar(273.15)
             # Ice cover parameters
             self.maxIceThickness = 3.0
             self.deltaIceThickness = 0.0
@@ -354,7 +346,7 @@ class Routing(object):
         self.getICs(iniItems, initialConditions)
         
         # initiate old style reporting  # TODO: remove this!
-        self.initiate_old_style_routing_reporting(iniItems)
+        #self.initiate_old_style_routing_reporting(iniItems)
 
     def getICs(self, iniItems, iniConditions=None):
 
@@ -461,7 +453,7 @@ class Routing(object):
         # obtain routing parameters based on average (long term) discharge
         # output: channel dimensions and characteristicDistance (for accuTravelTime input)
         
-        yMean = self.eta * pow(avgDischarge, self.nu )  # avgDischarge in m3/s
+        yMean = self.eta * pow(avgDischarge, self.nu)  # avgDischarge in m3/s
         wMean = self.tau * pow(avgDischarge, self.phi)
  
         # option to use constant channel width (m)
@@ -1724,7 +1716,7 @@ class Routing(object):
 
     def old_style_routing_reporting(self, currTimeStep):
 
-        if self.report == True:
+        if self.report:
             timeStamp = datetime.datetime(currTimeStep.year, currTimeStep.month, currTimeStep.day, 0)
             # writing daily output to netcdf files
             timestepPCR = currTimeStep.timeStepPCR
@@ -1771,7 +1763,7 @@ class Routing(object):
                         vars(self)[var + 'MonthTot'] += vars(self)[var]
 
                     # calculating average & reporting at the end of the month:
-                    if currTimeStep.endMonth == True:
+                    if currTimeStep.endMonth:
                         vars(self)[var + 'MonthAvg'] = vars(self)[var + 'MonthTot']/currTimeStep.day
                         self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_monthAvg.nc",
                                                    var,
@@ -1791,7 +1783,7 @@ class Routing(object):
                                                    currTimeStep.monthIdx-1)
 
             # writing yearly output to netcdf files
-            # -cummulative
+            # -cumulative
             if self.outAnnuaTotNC[0] != "None":
                 for var in self.outAnnuaTotNC:
 
@@ -1804,7 +1796,7 @@ class Routing(object):
                     vars(self)[var + 'AnnuaTot'] += vars(self)[var]
 
                     # reporting at the end of the year:
-                    if currTimeStep.endYear == True: 
+                    if currTimeStep.endYear:
                         self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var)  +"_annuaTot.nc",
                                                    var,
                                                    pcr2numpy(self.__getattribute__(var + 'AnnuaTot'), vos.MV),
@@ -1823,7 +1815,7 @@ class Routing(object):
                         vars(self)[var + 'AnnuaTot'] += vars(self)[var]
                     #
                     # calculating average & reporting at the end of the year:
-                    if currTimeStep.endYear == True:
+                    if currTimeStep.endYear:
                         vars(self)[var + 'AnnuaAvg'] = vars(self)[var + 'AnnuaTot']/currTimeStep.doy
                         self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaAvg.nc",
                                                    var,
@@ -1835,7 +1827,7 @@ class Routing(object):
             if self.outAnnuaEndNC[0] != "None":
                 for var in self.outAnnuaEndNC:
                     # reporting at the end of the year:
-                    if currTimeStep.endYear == True: 
+                    if currTimeStep.endYear:
                         self.netcdfObj.data2NetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaEnd.nc",
                                                    var,
                                                    pcr2numpy(self.__getattribute__(var), vos.MV),
@@ -1884,7 +1876,7 @@ class Routing(object):
         logInt=pcr.ln(pcr.exp(-x)+1)
         return logInt,x+logInt
 
-    def kinAlphaStatic(self,channelStorage):
+    def kinAlphaStatic(self, channelStorage):
         # given the total water storage in the cell, returns the Q-A relationship
         # for the kinematic wave and required parameters using a static floodplain extent
         if self.waterTemperature: 
@@ -1904,7 +1896,7 @@ class Routing(object):
         dischargeInitial = pcr.ifthenelse(alphaQ > 0.0, (wetA / alphaQ)**(1/self.beta), 0.0)
         return alphaQ, dischargeInitial
 
-    def kinAlphaDynamic(self,channelStorage):
+    def kinAlphaDynamic(self, channelStorage):
         # given the total water storage in the cell, returns the Q-A relationship
         # for the kinematic wave and required parameters
         floodVol = pcr.max(0,channelStorage-self.channelStorageCapacity)
@@ -2243,7 +2235,7 @@ class Routing(object):
         #calculate_oxygen()
         
         # old-style reporting                             
-        self.old_style_routing_reporting(currTimeStep)  # TODO: remove this one
+        #self.old_style_routing_reporting(currTimeStep)  # TODO: remove this one
 
     def simple_update_routing_only(self, currTimeStep, meteo):
 
@@ -2405,13 +2397,13 @@ class Routing(object):
 
         # calculate potential evaporation from water bodies OVER THE ENTIRE CELL AREA (m/day);
         # not only over surface water bodies
-        self.waterBodyPotEvap = self.calculate_potential_evaporation_routing_only(currTimeStep,meteo)
+        self.waterBodyPotEvap = self.calculate_potential_evaporation_routing_only(currTimeStep, meteo)
         
         # evaporation volume from water bodies (m3)
         # - not limited to available channelStorage 
         volLocEvapWaterBody = self.waterBodyPotEvap * self.cellArea
         # - limited to available channelStorage
-        volLocEvapWaterBody = pcr.min(pcr.max(0.0,self.channelStorage), volLocEvapWaterBody)
+        volLocEvapWaterBody = pcr.min(pcr.max(0.0, self.channelStorage), volLocEvapWaterBody)
 
         # update channelStorage (m3) after evaporation from water bodies
         self.channelStorage = self.channelStorage - volLocEvapWaterBody
@@ -2471,7 +2463,7 @@ class Routing(object):
         radiativHeatTransfer = (1 - pcr.ifthenelse(noIce, self.albedoWater, self.albedoSnow)) * self.radiationShort
         radiativHeatTransfer =\
             radiativHeatTransfer - self.stefanBoltzman *\
-            (pcr.ifthenelse(noIce,self.waterTemp, self.iceThresTemp)**4 - self.atmosEmis * self.temperatureKelvin**4)
+            (pcr.ifthenelse(noIce, self.waterTemp, self.iceThresTemp)**4 - self.atmosEmis * self.temperatureKelvin**4)
 
         advectedEnergyPrecip = pcr.max(0, self.correctPrecip) *\
                                pcr.max(self.iceThresTemp + 0.1, self.temperatureKelvin-self.deltaTPrec) * \

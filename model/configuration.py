@@ -15,8 +15,6 @@ import glob
 logger = logging.getLogger(__name__)
 
 
-    
-
 class Configuration(object):
 
     def __init__(self):
@@ -54,19 +52,19 @@ class Configuration(object):
         Initialize logging. Prints to both the console and a log file, at configurable levels
         """
 
-        #set root logger to debug level        
+        # set root logger to debug level
         logging.getLogger().setLevel(logging.DEBUG)
 
         formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
 
         log_level_console = "INFO"
-        log_level_file    = "DEBUG"
+        log_level_file = "DEBUG"
 
         console_level = getattr(logging, log_level_console.upper(), logging.INFO)
         if not isinstance(console_level, int):
             raise ValueError('Invalid log level: %s', log_level_console)
         
-        #create handler, add to root logger
+        # create handler, add to root logger
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         console_handler.setLevel(logging.DEBUG)
@@ -78,7 +76,7 @@ class Configuration(object):
         if not isinstance(file_level, int):
             raise ValueError('Invalid log level: %s', log_level_file)
 
-        #create handler, add to root logger
+        # create handler, add to root logger
         file_handler = logging.FileHandler(log_filename)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(file_level)
@@ -86,17 +84,6 @@ class Configuration(object):
         
         logger.info('Model run started at %s', self._timestamp)
         logger.info('Logging output to %s', log_filename)
-
-    def set_configuration(self):
-        # set all paths, clean output when requested
-        self.set_input_files()
-        self.create_output_directories()
-        # initialize logging
-        self.initialize_logging()
-        # copy ini file
-        self.backup_configuration()
-        # repair key names of initial conditions
-        self.repair_ini_key_names()        
         
     def backup_configuration(self):
         
@@ -112,7 +99,7 @@ class Configuration(object):
         config.read(modelFileName)
 
         # all sections provided in the configuration/ini file
-        self.allSections  = config.sections()
+        self.allSections = config.sections()
 
         # read all sections 
         for sec in self.allSections:
@@ -124,12 +111,10 @@ class Configuration(object):
         
     def set_input_files(self):
         # fullPath of CLONE:
-        self.cloneMap = vos.getFullPath(self.globalOptions['cloneMap'], \
-                                        self.globalOptions['inputDir'])
+        self.cloneMap = vos.getFullPath(self.globalOptions['cloneMap'], self.globalOptions['inputDir'])
 
-        # Get the fullPaths of the INPUT directories/files mentioned in 
-        #      a list/dictionary:         
-        dirsAndFiles = ['precipitationNC', 'temperatureNC','refETPotFileNC']
+        # Get the fullPaths of the INPUT directories/files mentioned in a list/dictionary:
+        dirsAndFiles = ['precipitationNC', 'temperatureNC', 'refETPotFileNC']
         for item in dirsAndFiles:
             if self.meteoOptions[item] != "None":
                 self.meteoOptions[item] = vos.getFullPath(self.meteoOptions[item], self.globalOptions['inputDir'])
@@ -149,22 +134,19 @@ class Configuration(object):
             pass # for new outputDir (not exist yet)
 
         # making temporary directory:
-        self.tmpDir = vos.getFullPath("tmp/", \
-                                      self.globalOptions['outputDir'])
+        self.tmpDir = vos.getFullPath("tmp/", self.globalOptions['outputDir'])
         
         if os.path.exists(self.tmpDir):
             shutil.rmtree(self.tmpDir)
         os.makedirs(self.tmpDir)
         
-        self.outNCDir = vos.getFullPath("netcdf/", \
-                                         self.globalOptions['outputDir'])
+        self.outNCDir = vos.getFullPath("netcdf/", self.globalOptions['outputDir'])
         if os.path.exists(self.outNCDir):
             shutil.rmtree(self.outNCDir)
         os.makedirs(self.outNCDir)
 
         # making backup for the python scripts used:
-        self.scriptDir = vos.getFullPath("scripts/", \
-                                         self.globalOptions['outputDir'])
+        self.scriptDir = vos.getFullPath("scripts/", self.globalOptions['outputDir'])
 
         if os.path.exists(self.scriptDir):
             shutil.rmtree(self.scriptDir)
@@ -176,23 +158,20 @@ class Configuration(object):
             shutil.copy(filename, self.scriptDir)
 
         # making log directory:
-        self.logFileDir = vos.getFullPath("log/", \
-                                          self.globalOptions['outputDir'])
+        self.logFileDir = vos.getFullPath("log/", self.globalOptions['outputDir'])
         cleanLogDir = True
         if os.path.exists(self.logFileDir) and cleanLogDir:
             shutil.rmtree(self.logFileDir)
         os.makedirs(self.logFileDir)
 
         # making endStateDir directory:
-        self.endStateDir = vos.getFullPath("states/", \
-                                           self.globalOptions['outputDir'])
+        self.endStateDir = vos.getFullPath("states/", self.globalOptions['outputDir'])
         if os.path.exists(self.endStateDir):
             shutil.rmtree(self.endStateDir)
         os.makedirs(self.endStateDir)
 
         # making pcraster maps directory:
-        self.mapsDir = vos.getFullPath("maps/", \
-                                       self.globalOptions['outputDir'])
+        self.mapsDir = vos.getFullPath("maps/", self.globalOptions['outputDir'])
         cleanMapDir = True
         if os.path.exists(self.mapsDir) and cleanMapDir:
             shutil.rmtree(self.mapsDir)
@@ -210,22 +189,18 @@ class Configuration(object):
         # temporal resolution of the model
         self.timeStep = 1.0
         self.timeStepUnit = "day"
-        if 'timeStep' in self.globalOptions.keys() and \
-           'timeStepUnit'in self.globalOptions.keys():
-
-            if float(self.globalOptions['timeStep']) != 1.0 or \
-                     self.globalOptions['timeStepUnit'] != "day":
+        if 'timeStep' in self.globalOptions.keys() and 'timeStepUnit' in self.globalOptions.keys():
+            if float(self.globalOptions['timeStep']) != 1.0 or self.globalOptions['timeStepUnit'] != "day":
                 logger.info('The model runs only on daily time step. Please check your ini/configuration file')
-                self.timeStep     = None
+                self.timeStep = None
                 self.timeStepUnit = None
         
-        # adjusment for routingOptions
+        # adjustment for routingOptions
         if 'routingMethod' not in self.routingOptions.keys():
             logger.info('The "routingMethod" is not defined in the "routingOptions" of the configuration file. "accuTravelTime" is used in this run.')
-            iniItems.routingOptions['routingMethod'] = "accuTravelTime"
+            self.routingOptions['routingMethod'] = "accuTravelTime"
 
-        # adjusment for initial conditions in the routingOptions
-        #
+        # adjustment for initial conditions in the routingOptions
         if 'm2tChannelDischargeLongIni' in self.routingOptions.keys():
             self.routingOptions['m2tDischargeLongIni'] = self.routingOptions['m2tChannelDischargeLongIni']
         #
@@ -250,16 +225,13 @@ class Configuration(object):
         #
         if 'avgDischargeShortIni' not in self.routingOptions.keys():
             logger.info('The initial condition "avgDischargeShortIni" is not defined. "avgDischargeLongIni" is used in this run.')
-        #    self.routingOptions['avgDischargeShortIni'] = self.routingOptions['avgDischargeLongIni']
+            self.routingOptions['avgDischargeShortIni'] = self.routingOptions['avgDischargeLongIni']
         #
         if 'avgSurfaceWaterInputLongIni' not in self.routingOptions.keys():
             logger.info("Note that avgSurfaceWaterInputLongIni is not used and not needed.")
             
         if 'subDischargeIni' not in self.routingOptions.keys() or self.routingOptions['subDischargeIni'] == str(None):
-            msg  = 'The initial condition "subDischargeIni" is not defined. Either "avgDischargeShortIni" or "avgDischargeLongIni" is used in this run. '
-            msg += 'Note that the "subDischargeIni" is only relevant if kinematic wave approaches are used.'
+            msg = 'The initial condition "subDischargeIni" is not defined. "avgDischargeShortIni" is used in this run.'
+            msg += 'Note that the "subDischargeIni" is only relevant if the kinematic wave approach is used.'
             logger.info(msg)
-        #    self.routingOptions['subDischargeIni'] = self.routingOptions['avgDischargeShortIni']
-        #
-        # TODO: repair key names while somebody wants to run 3 layer model but use 2 layer initial conditions (and vice versa). 
-
+            self.routingOptions['subDischargeIni'] = self.routingOptions['avgDischargeShortIni']

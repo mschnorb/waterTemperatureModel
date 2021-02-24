@@ -266,7 +266,7 @@ class Meteo(object):
             print("Error: only precipitation may be updated at this time")
             return -1
 
-    def update(self,currTimeStep):
+    def update(self, currTimeStep):
         #TODO: calculate  referencePotET
         pass
 

@@ -4,24 +4,21 @@
 import os
 import math
 import logging
-
 import pcraster as pcr
-
 import virtualOS as vos
+
 
 class SpinUp(object):
 
     def __init__(self, iniItems):
         object.__init__(self)
         
-        self.noSpinUps      = None
-
+        self.noSpinUps = None
         self.setupConvergence(iniItems) 
 
-    def setupConvergence(self,iniItems):
+    def setupConvergence(self, iniItems):
 
-        self.noSpinUps         =   int(iniItems.globalOptions['maxSpinUpsInYears'])
-
+        self.noSpinUps = int(iniItems.globalOptions['maxSpinUpsInYears'])
         self.minConvForTotlSto = float(iniItems.globalOptions['minConvForTotlSto'])
         self.minConvForSoilSto = float(iniItems.globalOptions['minConvForSoilSto'])
         self.minConvForGwatSto = float(iniItems.globalOptions['minConvForGwatSto'])
@@ -32,11 +29,9 @@ class SpinUp(object):
         
         self.endStateDir = iniItems.endStateDir     
 
-    def getIniStates(self,model):
+    def getIniStates(self, model):
 
-        self.iniChanSto = max(1E-20,\
-                          vos.getMapVolume(\
-                          model.routing.channelStorage,1))
+        self.iniChanSto = max(1E-20, vos.getMapVolume(model.routing.channelStorage, 1))
 
     def channelStorageVolume(self, state, cellAreaMap):
         return vos.getMapVolume(state['routing']['channelStorage'], cellAreaMap) # unit: m3
@@ -50,7 +45,6 @@ class SpinUp(object):
           
         convChanSto = math.fabs(100*(endChanSto-beginChanSto)/beginChanSto)
         
-        logging.getLogger('spinup').info('Delta ChanStorage = %.2f percent' \
-                    %(convChanSto))
+        logging.getLogger('spinup').info('Delta ChanStorage = %.2f percent' %(convChanSto))
 
         return convChanSto <= self.minConvForChanSto

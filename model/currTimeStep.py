@@ -12,10 +12,9 @@ class ModelTime(object):
     def __init__(self):
         object.__init__(self)
         self._spinUpStatus = False
-    
-  
-    #FIXME: use __init__
-    def getStartEndTimeSteps(self,strStartTime,strEndTime):
+
+    # FIXME: use __init__
+    def getStartEndTimeSteps(self, strStartTime, strEndTime):
         # get startTime, endTime, nrOfTimeSteps 
         sd = str(strStartTime).split('-')
         self._startTime = datetime.date(int(sd[0]), int(sd[1]), int(sd[2]))
@@ -23,25 +22,23 @@ class ModelTime(object):
         self._endTime = datetime.date(int(ed[0]), int(ed[1]), int(ed[2]))
         self._nrOfTimeSteps = 1 + (self.endTime - self.startTime).days
         self._spinUpStatus = False
-        logger.info("number of time steps :"+str(self._nrOfTimeSteps))
-        self._monthIdx = 0 # monthly indexes since the simulation starts
-        self._annuaIdx = 0 #  yearly indexes since the simulation starts
+        logger.info("number of time steps :" + str(self._nrOfTimeSteps))
+        self._monthIdx = 0  # monthly indexes since the simulation starts
+        self._annuaIdx = 0  # yearly indexes since the simulation starts
 
-    #FIXME: use __init__
-    def getStartEndTimeStepsForSpinUp(self,strStartTime,noSpinUp,maxSpinUps):
+    # FIXME: use __init__
+    def getStartEndTimeStepsForSpinUp(self, strStartTime, noSpinUp, maxSpinUps):
         # get startTime, endTime, nrOfTimeSteps for SpinUps
         sd = str(strStartTime).split('-')
         self._startTime = datetime.date(int(sd[0]), int(sd[1]), int(sd[2]))
-        self._endTime = datetime.date(int(sd[0])+1, int(sd[1]), int(sd[2])) -\
-                       datetime.timedelta(days=1)
+        self._endTime = datetime.date(int(sd[0])+1, int(sd[1]), int(sd[2])) - datetime.timedelta(days=1)
         self._nrOfTimeSteps = 1 + (self.endTime - self.startTime).days
         self._spinUpStatus = True
-        self._noSpinUp   = noSpinUp
+        self._noSpinUp = noSpinUp
         self._maxSpinUps = maxSpinUps
-        self._monthIdx = 0 # monthly indexes since the simulation starts
-        self._annuaIdx = 0 #  yearly indexes since the simulation starts
-        
-        
+        self._monthIdx = 0  # monthly indexes since the simulation starts
+        self._annuaIdx = 0  # yearly indexes since the simulation starts
+
     @property    
     def spinUpStatus(self):
         return self._spinUpStatus
@@ -94,12 +91,12 @@ class ModelTime(object):
     def fulldate(self):
         return self._fulldate
 
-    def update(self,timeStepPCR):
+    def update(self, timeStepPCR):
         self._timeStepPCR = timeStepPCR
         self._currTime = self._startTime + datetime.timedelta(days=1 * (timeStepPCR - 1))
         self._fulldate = str(self.currTime.strftime('%Y-%m-%d'))
         print(self._fulldate)
-        if self._spinUpStatus == True : 
+        if self._spinUpStatus:
             logger.info("Spin-Up "+str(self._noSpinUp)+" of "+str(self._maxSpinUps))
 
         # The following contains hours, minutes, seconds, etc. 

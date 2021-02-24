@@ -51,11 +51,10 @@ def dayLength(doy,lat):
     h = pcr.ifthenelse(arg <  -1.0 ,math.pi,h) # /* sun stays above horizon */
     return (h /  math.pi)
 
-
 def satPressure ( airT):
     """ calculates saturated vp from airt temperature Murray (1967) """
     # airT      - air temperature [degree C] */
-    satPressure = pcr.ifthenelse(airT >= 0.0 , 0.61078 * pcr.exp (17.26939 * airT / (airT + 237.3)) ,\
-        0.61078 * pcr.exp (21.87456 * airT / (airT + 265.5)))
+    satPressure = pcr.ifthenelse(airT >= 0.0 , 0.61078 * pcr.exp (17.26939 * airT / (airT + 237.3)),
+                                 0.61078 * pcr.exp (21.87456 * airT / (airT + 265.5)))
     return satPressure
 

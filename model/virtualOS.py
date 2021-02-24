@@ -582,7 +582,7 @@ def makeDir(directoryName):
     except OSError:
         pass
 
-def writePCRmapToDir(v,outFileName,outDir):
+def writePCRmapToDir(v, outFileName, outDir):
     # v: inputMapFileName or floating values
     # cloneMapFileName: If the inputMap and cloneMap have different clones,
     #                   resampling will be done. Then,
