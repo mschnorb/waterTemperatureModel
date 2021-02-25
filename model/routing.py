@@ -127,21 +127,21 @@ class Routing(object):
         # (default: 1 month = 1 * 30 days = 30)
         self.maxTimestepsToAvgDischargeShort = 30.                            
 
-        #routingParameters = ['gradient','manningsN']
-        #for var in routingParameters:
-        #    inputP = iniItems.routingOptions[str(var)]
-        #    vars(self)[var] = vos.readPCRmapClone(inputP, self.cloneMap, self.tmpDir, self.inputDir)
-
+        # routing parameters
         self.gradient = vos.readPCRmapClone(iniItems.routingOptions['gradient'],
                                             self.cloneMap, self.tmpDir, self.inputDir)
         self.manningsN = vos.readPCRmapClone(iniItems.routingOptions['manningsN'],
                                             self.cloneMap, self.tmpDir, self.inputDir)
 
-        # parameters needed to estimate channel dimensions/parameters   
-        self.eta = 0.25
-        self.nu  = 0.40
-        self.tau = 8.00
-        self.phi = 0.58
+        # parameters needed to estimate channel dimensions/parameters
+        self.eta = vos.readPCRmapClone(iniItems.routingOptions['eta'],
+                                       self.cloneMap, self.tmpDir, self.inputDir)
+        self.nu = vos.readPCRmapClone(iniItems.routingOptions['nu'],
+                                      self.cloneMap, self.tmpDir, self.inputDir)
+        self.tau = vos.readPCRmapClone(iniItems.routingOptions['tau'],
+                                       self.cloneMap, self.tmpDir, self.inputDir)
+        self.phi = vos.readPCRmapClone(iniItems.routingOptions['phi'],
+                                       self.cloneMap, self.tmpDir, self.inputDir)
 
         # option to use minimum channel width (m)
         self.minChannelWidth = pcr.scalar(0.0)
@@ -154,13 +154,15 @@ class Routing(object):
         self.constantChannelWidth = None
         if "constantChannelWidth" in iniItems.routingOptions.keys():
             if iniItems.routingOptions['constantChannelWidth'] != "None":
-               self.constantChannelWidth = vos.readPCRmapClone(iniItems.routingOptions['constantChannelWidth'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
+                self.constantChannelWidth = vos.readPCRmapClone(iniItems.routingOptions['constantChannelWidth'],
+                                                                self.cloneMap, self.tmpDir, self.inputDir)
 
         # an assumption for broad sheet flow in kinematic wave methods/approaches        
-        self.beta = 0.6 
+        #self.beta = 0.6
+        self.beta = vos.readPCRmapClone(iniItems.routingOptions['beta'],
+                                        self.cloneMap, self.tmpDir, self.inputDir)
 
-        # cellLength (m) is approximated cell diagonal   
+        # cellLength (m) is approximated by cell diagonal
         #
         cellSizeInArcMin = self.cellSizeInArcDeg*60.
         verticalSizeInMeter = cellSizeInArcMin*1852.
@@ -568,22 +570,19 @@ class Routing(object):
         # - the shorter is the better
         # - estimated based on the initial or latest sub-time step discharge (unit: m3/s)
         #
-        length_of_sub_time_step = pcr.ifthenelse(self.subDischarge > 0.0, 
-                                  self.water_height * self.dynamicFracWat * self.cellArea / self.subDischarge,
-                                                 vos.secondsPerDay())
+        length_of_sub_time_step = pcr.ifthenelse(
+            self.subDischarge > 0.0, self.water_height * self.dynamicFracWat * self.cellArea / self.subDischarge,
+            vos.secondsPerDay())
 
         # determine the number of sub time steps (based on Rens van Beek's method - check this method with him)
         #
-        critical_condition = (length_of_sub_time_step < vos.secondsPerDay())  & \
+        critical_condition = (length_of_sub_time_step < vos.secondsPerDay()) & \
                              (self.water_height > self.critical_water_height) & \
                              (self.lddMap != pcr.ldd(5))
         #
-        number_of_sub_time_steps = vos.secondsPerDay() / \
-                                   pcr.cover(
-                                       pcr.areaminimum(
-                                           pcr.ifthen(critical_condition,
-                                                      length_of_sub_time_step),self.landmask),
-                                       vos.secondsPerDay()/self.limit_num_of_sub_time_steps)
+        number_of_sub_time_steps = vos.secondsPerDay() / pcr.cover(pcr.areaminimum(pcr.ifthen(
+            critical_condition, length_of_sub_time_step), self.landmask),
+            vos.secondsPerDay()/self.limit_num_of_sub_time_steps)
         number_of_sub_time_steps = 1.25 * number_of_sub_time_steps + 1
         number_of_sub_time_steps = pcr.roundup(number_of_sub_time_steps)
         #
@@ -620,9 +619,8 @@ class Routing(object):
                                     (pcr.max(self.min_fracwat_for_water_height, self.dynamicFracWat) * self.cellArea))
         self.iniWater = self.water_height
         # estimate the length of sub-time step (unit: s):
-        length_of_sub_time_step, number_of_loops = \
-          self.estimate_length_of_sub_time_step()
-        msg = "Start kinamatic wave routng for "+str(number_of_loops)+" loops"
+        length_of_sub_time_step, number_of_loops = self.estimate_length_of_sub_time_step()
+        msg = "Start kinematic wave routing for "+str(number_of_loops)+" loops"
         logger.info(msg)
         for i_loop in range(number_of_loops):
             
@@ -1174,7 +1172,7 @@ class Routing(object):
         # estimate of channel discharge (m3/s) based on water height
         #
         dischargeInitial = pcr.ifthenelse(alpha > 0.0,
-                                          (self.water_height * self.wMean / alpha)**(1/self.beta),0.0)
+                                          (self.water_height * self.wMean / alpha)**(1/self.beta), 0.0)
         return alpha, dischargeInitial
 
     def return_water_body_storage_to_channel(self, channelStorage):
@@ -1982,7 +1980,7 @@ class Routing(object):
         landRunoff = self.runoff
         self.correctPrecip = pcr.scalar(0.0)
         self.dynamicFracWatBeforeRouting = self.dynamicFracWat
-        self.dynamicFracWat = pcr.max(self.dynamicFracWat,0.001)
+        self.dynamicFracWat = pcr.max(self.dynamicFracWat, 0.001)
         landT= pcr.cover(landSurface.directRunoff/landRunoff*pcr.max(self.iceThresTemp+0.1,self.temperatureKelvin-self.deltaTPrec)+\
            landSurface.interflowTotal/landRunoff*pcr.max(self.iceThresTemp+0.1,self.temperatureKelvin)+\
            groundwater.baseflow/landRunoff*pcr.max(self.iceThresTemp+5.0,self.annualT),self.temperatureKelvin)
