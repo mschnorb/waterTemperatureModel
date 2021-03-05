@@ -61,7 +61,7 @@ class RoutingModel(object):
         self.routing = routing.Routing(self._configuration, initialState, self.lddMap)
  
     def dumpState(self, outputDirectory):
-        #write all state to disk to facilitate restarting
+        # write all state to disk to facilitate restarting
 
         if outputDirectory == None:
             return
