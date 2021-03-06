@@ -1,10 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os
 import math
 import logging
-import pcraster as pcr
 import virtualOS as vos
 
 

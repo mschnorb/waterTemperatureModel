@@ -1,16 +1,13 @@
 #!/usr/bin/ python
 # -*- coding: utf-8 -*-
 
-import os
-import types
+import virtualOS as vos
 
 from pcraster.framework import *
 import pcraster as pcr
 
 import logging
 logger = logging.getLogger(__name__)
-
-import virtualOS as vos
 
 
 class WaterBodies(object):
@@ -78,7 +75,7 @@ class WaterBodies(object):
         # date used for accessing/extracting water body information
         date_used = currTimeStep.fulldate
         year_used = currTimeStep.year
-        if self.onlyNaturalWaterBodies == True:
+        if self.onlyNaturalWaterBodies:
             date_used = self.dateForNaturalCondition
             year_used = self.dateForNaturalCondition[0:4]
 

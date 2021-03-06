@@ -4,9 +4,7 @@
 import configparser
 import optparse
 import os
-import sys
 import virtualOS as vos
-import time
 import datetime
 import logging
 import shutil

@@ -3,9 +3,8 @@
 
 import logging
 logger = logging.getLogger(__name__)
-
-import time
 import datetime
+
 
 class ModelTime(object):
 
