@@ -550,6 +550,8 @@ class WaterBodies(object):
     def getThermoClineStorage(self):
         self.hypolimnionStorage = pcr.min(
             pcr.ifthenelse(
-                pcr.scalar(self.waterBodyTyp) == 1, (((self.maxWaterDepth - self.mixingDepth)**3.) * (self.waterBodyShapeFactor ** 2))/3.0,
-                ifthen(pcr.scalar(self.waterBodyTyp) == 2, (((self.maxWaterDepth - self.mixingDepth)**3.) * (self.waterBodyShapeFactor ** 2))/6.0)),
+                pcr.scalar(self.waterBodyTyp) == 1,
+                (((self.maxWaterDepth - self.mixingDepth)**3.) * (self.waterBodyShapeFactor ** 2))/3.0,
+                ifthen(pcr.scalar(self.waterBodyTyp) == 2,
+                       (((self.maxWaterDepth - self.mixingDepth)**3.) * (self.waterBodyShapeFactor ** 2))/6.0)),
             self.waterBodyStorage)
