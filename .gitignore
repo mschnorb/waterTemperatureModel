@@ -2,4 +2,5 @@
 *.pyc
 model/*.pyc
 __pycache__/
+*.ini
 
