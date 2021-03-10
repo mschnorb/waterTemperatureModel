@@ -48,8 +48,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for daily reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
                 
@@ -74,9 +74,10 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for sub-season accumulation reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_monthly_total_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
-                if long_name == None: long_name = short_name  
+                unit = varDicts.netcdf_monthly_total_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
+                if long_name is None:
+                    long_name = short_name
 
                 # creating netCDF files:
                 self.netcdfObj.createNetCDF(self.outNCDir + "/" + str(var) + "_seasoTot_output.nc",
@@ -101,8 +102,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for sub-season average reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -123,8 +124,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for sub-season end reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -148,8 +149,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for monthly accumulation reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_monthly_total_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_monthly_total_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -176,8 +177,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for monthly average reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -198,8 +199,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for monthly end reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -224,8 +225,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for annual accumulation reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_yearly_total_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_yearly_total_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -252,8 +253,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for annual average reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -274,8 +275,8 @@ class Reporting(object):
                 logger.info("Creating the netcdf file for annual end reporting for variable %s.", str(var))
 
                 short_name = varDicts.netcdf_short_name[var]
-                unit       = varDicts.netcdf_unit[var]      
-                long_name  = varDicts.netcdf_long_name[var]
+                unit = varDicts.netcdf_unit[var]
+                long_name = varDicts.netcdf_long_name[var]
                 if long_name is None:
                     long_name = short_name
 
@@ -302,8 +303,8 @@ class Reporting(object):
 
     def basic_post_processing(self):
 
-        self.precipitation  = self._model.meteo.precipitation 
-        self.temperature    = self._model.meteo.temperature
+        self.precipitation = self._model.meteo.precipitation
+        self.temperature = self._model.meteo.temperature
         self.referencePotET = self._model.meteo.referencePotET 
 
         # water body evaporation (m) - from surface water fractions only
@@ -331,10 +332,6 @@ class Reporting(object):
 
     def additional_post_processing(self):
         # In this method/function, users can add their own post-processing.
-        
-        # consumption for and return flow from non irrigation water demand (unit: m/day)  
-        ## TODO self.nonIrrWaterConsumption = self._model.routing.nonIrrWaterConsumption
-        ## TODO self.nonIrrReturnFlow       = self._model.routing.nonIrrReturnFlow
 
         # water temperature (K)
         if "waterTemp" in self.variables_for_report:
@@ -349,7 +346,7 @@ class Reporting(object):
             self.accuRunoff =\
                 pcr.catchmenttotal(self.runoff * self._model.routing.cellArea, self._model.routing.lddMap) /\
                 vos.secondsPerDay()
-        
+
         # accumulated baseflow (m3) along the drainage network
         if "accuBaseflow" in self.variables_for_report:
             self.accuBaseflow = pcr.catchmenttotal(self.baseflow * self._model.routing.cellArea,
@@ -358,11 +355,11 @@ class Reporting(object):
         # local changes in water bodies (i.e. abstraction, return flow, evaporation, bed exchange), excluding runoff
         self.local_water_body_flux = self._model.routing.local_input_to_surface_water /\
                                      self._model.routing.cellArea - self.runoff
-        
+
         # total runoff (m) from local land surface runoff and local changes in water bodies
         # actually this is equal to self._model.routing.local_input_to_surface_water / self._model.routing.cellArea
         self.totalRunoff = self.runoff + self.local_water_body_flux
-        
+
         # accumulated total runoff (m3) along the drainage network - not including local changes in water bodies
         if "accuTotalRunoff" in self.variables_for_report:
             self.accuTotalRunoff = pcr.catchmenttotal(self.totalRunoff * self._model.routing.cellArea,
@@ -379,7 +376,23 @@ class Reporting(object):
                            pcr.scalar(self._model.routing.WaterBodies.waterBodyIds) > 0.,
                            self._model.routing.WaterBodies.waterBodyStorage))
         #
-        
+
+        # Energy balance terms
+        if "waterHeatTransfer" in self.variables_for_report:
+            self.waterHeatTransfer = self._model.routing.waterHeatTransfer
+
+        if "radiativeHeatTransfer" in self.variables_for_report:
+            self.radiativeHeatTransfer = self._model.routing.radiativeHeatTransfer
+
+        if "latentHeatTransfer" in self.variables_for_report:
+            self.latentHeatTransfer = self._model.routing.latentHeatTransfer
+
+        if "advectedEnergyInflow" in self.variables_for_report:
+            self.advectedEnergyInflow = self._model.routing.advectedEnergyInflow
+
+        if "advectedEnergyPrecip" in self.variables_for_report:
+            self.advectedEnergyPrecip = self._model.routing.advectedEnergyPrecip
+
     def report(self):
 
         self.post_processing()

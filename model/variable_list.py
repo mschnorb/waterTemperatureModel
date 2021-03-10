@@ -268,6 +268,61 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Water height in channel, values include reservoirs and lakes'
 latex_symbol[pcrglobwb_variable_name]      = None
 
-#~ # remove/clear pcrglobwb_variable_name 
+# water heat transfer to/from atmosphere
+pcrglobwb_variable_name = 'waterHeatTransfer'
+netcdf_short_name[pcrglobwb_variable_name] = 'waterHeatTransfer'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Sensible heat transfer at water surface'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# radiative heat transfer at water surface
+pcrglobwb_variable_name = 'radiativeHeatTransfer'
+netcdf_short_name[pcrglobwb_variable_name] = 'radiativeHeatTransfer'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Net radiation at water surface'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# latent heat transfer at water surface
+pcrglobwb_variable_name = 'latentHeatTransfer'
+netcdf_short_name[pcrglobwb_variable_name] = 'latentHeatTransfer'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Latent heat transfer at water surface'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Advected energy from runoff
+pcrglobwb_variable_name = 'advectedEnergyInflow'
+netcdf_short_name[pcrglobwb_variable_name] = 'advectedEnergyInflow'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Advected energy from land runoff'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Advected energy from precipitation
+pcrglobwb_variable_name = 'advectedEnergyPrecip'
+netcdf_short_name[pcrglobwb_variable_name] = 'advectedEnergyPrecip'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Advected energy from precipitation'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+#~ # remove/clear pcrglobwb_variable_name
 #~ pcrglobwb_variable_name = None
 #~ del pcrglobwb_variable_name

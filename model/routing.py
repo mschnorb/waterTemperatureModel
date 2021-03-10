@@ -636,7 +636,7 @@ class Routing(object):
             waterBodyOutflowInM3PerSec = pcr.ifthen(self.WaterBodies.waterBodyOut,
                                                     self.WaterBodies.waterBodyOutflow) / vos.secondsPerDay()
             waterBodyOutflowInM3PerSec = pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.0,
-                                                    pcr.cover(waterBodyOutflowInM3PerSec,0.0))
+                                                    pcr.cover(waterBodyOutflowInM3PerSec, 0.0))
             dischargeInitial = pcr.cover(waterBodyOutflowInM3PerSec, dischargeInitial)
 
             # discharge (m3/s) based on kinematic wave approximation
@@ -1663,14 +1663,14 @@ class Routing(object):
                     vars(self)[var+'MonthTot'] = None
                     # initiating monthlyVarAvg:
                     vars(self)[var+'MonthAvg'] = None
-                     # creating the netCDF files:
+                    # creating the netCDF files:
                     self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_monthAvg.nc",
                                                 var,
                                                 "undefined")
             # - last day of the month
             if self.outMonthEndNC[0] != "None":
                 for var in self.outMonthEndNC:
-                     # creating the netCDF files:
+                    # creating the netCDF files:
                     self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_monthEnd.nc",
                                                 var,
                                                 "undefined")
@@ -1691,14 +1691,14 @@ class Routing(object):
                     vars(self)[var+'AnnuaAvg'] = None
                     # initiating annualyTotAvg (accumulator variable)
                     vars(self)[var+'AnnuaTot'] = None
-                     # creating the netCDF files:
+                    # creating the netCDF files:
                     self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaAvg.nc",
                                                 var,
                                                 "undefined")
             # - last day of the year
             if self.outAnnuaEndNC[0] != "None":
                 for var in self.outAnnuaEndNC:
-                     # creating the netCDF files:
+                    # creating the netCDF files:
                     self.netcdfObj.createNetCDF(str(self.outNCDir) + "/" + str(var) + "_annuaEnd.nc",
                                                 var,
                                                 "undefined")
@@ -2513,6 +2513,14 @@ class Routing(object):
         advectedEnergyPrecip = advectedEnergyPrecip + deltaIceThickness_melt * self.iceThresTemp * \
                                self.specificHeatWater * self.densityWater/timeSec
 
+        # Capture energy balance terms for output
+        self.waterHeatTransfer = waterHeatTransfer
+        self.radiativeHeatTransfer = radiativeHeatTransfer
+        self.latentHeatTransfer = latentHeat
+        self.advectedEnergyInflow = advectedEnergyInflow
+        self.advectedEnergyPrecip = advectedEnergyPrecip
+
+        # Change in energy storage and resulting temperature
         totEWC = totStorLoc * self.specificHeatWater * self.densityWater
         dtotEWC = dtotStorLoc * self.specificHeatWater * self.densityWater
         dtotEWLoc = (waterHeatTransfer + pcr.scalar(noIce) * (radiativeHeatTransfer+latentHeat)) * timeSec
@@ -2522,15 +2530,14 @@ class Routing(object):
                 0, totEWC * self.temperatureKelvin-self.totEW) +
                        pcr.ifthenelse(dtotStorLoc > 0,
                                       pcr.max(0, dtotEWC * self.temperatureKelvin-dtotEWAdv), 0))
-        dtotEWLoc = pcr.ifthenelse(self.waterTemp > self.temperatureKelvin, pcr.min(0,dtotEWLoc),dtotEWLoc)
+        dtotEWLoc = pcr.ifthenelse(self.waterTemp > self.temperatureKelvin, pcr.min(0, dtotEWLoc), dtotEWLoc)
         dtotEWLoc = pcr.max(dtotEWLoc,
                             pcr.min(0,
                                     (totEWC+dtotEWC) * pcr.max(self.temperatureKelvin,
                                                                self.iceThresTemp+.1)-(self.totEW+dtotEWAdv)))
-        # change in energy storage and resulting temperature
         self.totEW = pcr.max(0, self.totEW + dtotEWLoc + dtotEWAdv)
-        self.temp_water_height = pcr.max(1e-16, totStorLoc + dtotStorLoc)
 
+        self.temp_water_height = pcr.max(1e-16, totStorLoc + dtotStorLoc)
         self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,
                                         self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater),
                                         self.temperatureKelvin)
