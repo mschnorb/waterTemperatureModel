@@ -2230,20 +2230,7 @@ class Routing(object):
         self.dynamicFracWat = pcr.ifthen(self.landmask, self.dynamicFracWat)
 
         # routing methods
-        if self.method == "accuTravelTime" or self.method == "simplifiedKinematicWave":
-            self.simple_update_routing_only(currTimeStep, meteo)
-        #
-        # if self.method == "kinematicWave":
-        #     self.kinematic_wave_update(self, landSurface, groundwater, currTimeStep, meteo)
-        # NOTE that this method require abstraction from fossil groundwater.
-
-        # infiltration from surface water bodies (rivers/channels, as well as lakes and/or reservoirs)
-        # to groundwater bodies
-        # - this exchange fluxes will be handed in the next time step
-        # - in the future, this will be the interface between PCR-GLOBWB & MODFLOW (based on the difference between
-        # surface water levels & groundwater heads)
-        #
-        #self.calculate_exchange_to_groundwater(groundwater,currTimeStep)
+        self.simple_update_routing_only(currTimeStep, meteo)
 
         # volume water released in pits (losses: to the ocean / endorheic basin)
         self.outgoing_volume_at_pits = pcr.ifthen(self.landmask,
@@ -2255,10 +2242,9 @@ class Routing(object):
         self.readAvlChannelStorage = self.estimate_available_volume_for_abstraction(self.channelStorage)
 
         # estimate oxygen content at 100% saturation
-        #calculate_oxygen()
+        #if self.waterTemperature:
+        #    self.calculate_oxygen()
 
-        # old-style reporting                             
-        #self.old_style_routing_reporting(currTimeStep)  # TODO: remove this one
 
     def simple_update_routing_only(self, currTimeStep, meteo):
 
@@ -2578,8 +2564,8 @@ class Routing(object):
         self.O2 = ((pcr.exp(7.7117-1.31403 * pcr.ln(self.waterTemp+45.93))) *
                    P * (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))/P) *
                    (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2)))*P)) /\
-                  (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))) /\
-                  (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2))))
+                   (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))) /\
+                   (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2))))
 
     def getEnergyRatio(self, hypolimnionTemperature=277.15):
         self.WaterBodies.getThermoClineDepth()
