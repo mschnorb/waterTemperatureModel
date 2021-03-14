@@ -1000,26 +1000,24 @@ def waterBalanceCheck(fluxesIn, fluxesOut, preStorages, endStorages, processName
     """ Returns the water balance for a list of input, output, and storage map files  """
     # modified by Edwin (22 Apr 2013)
 
-    inMap   = pcr.spatial(pcr.scalar(0.0))
-    outMap  = pcr.spatial(pcr.scalar(0.0))
-    dsMap   = pcr.spatial(pcr.scalar(0.0))
+    inMap = pcr.spatial(pcr.scalar(0.0))
+    outMap = pcr.spatial(pcr.scalar(0.0))
+    dsMap = pcr.spatial(pcr.scalar(0.0))
 
     for fluxIn in fluxesIn:
-        inMap   += fluxIn
+        inMap += fluxIn
     for fluxOut in fluxesOut:
-        outMap  += fluxOut
+        outMap += fluxOut
     for preStorage in preStorages:
-        dsMap   += preStorage
+        dsMap += preStorage
     for endStorage in endStorages:
-        dsMap   -= endStorage
+        dsMap -= endStorage
 
-    a,b,c = getMinMaxMean(inMap + dsMap- outMap, ignoreEmptyMap=True)
+    a, b, c = getMinMaxMean(inMap + dsMap - outMap, ignoreEmptyMap=True)
     if abs(a) > threshold or abs(b) > threshold:
         if PrintOnlyErrors:
 
-            msg  = "\n"
-            msg += "\n"
-            msg  = "\n"
+            msg = "\n"
             msg += "\n"
             msg += "##############################################################################################################################################\n"
             msg += "WARNING !!!!!!!! Water Balance Error %s Min %f Max %f Mean %f" %(processName,a,b,c)
@@ -1027,9 +1025,7 @@ def waterBalanceCheck(fluxesIn, fluxesOut, preStorages, endStorages, processName
             msg += "##############################################################################################################################################\n"
             msg += "\n"
             msg += "\n"
-            msg += "\n"
 
-            logger.info(msg)
             logger.info(msg)
 
             #~ pcr.report(inMap + dsMap - outMap,"wb.map")

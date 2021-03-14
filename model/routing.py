@@ -671,6 +671,9 @@ class Routing(object):
                 self.energyRouting(length_of_sub_time_step)
                 self.channelStorageTimeBefore = pcr.max(0.0, self.channelStorageNow)
 
+        # Store last iteration of alpha for potential output
+        self.alpha = alpha
+
         # channel discharge (m3/day) = self.Q
         self.Q = discharge_volume
 
@@ -1151,8 +1154,8 @@ class Routing(object):
         #
         if self.waterTemperature:
             manIce = pcr.max(self.manningsN,
-                             0.0493*pcr.max(0.01,self.channelStorage/(self.dynamicFracWat*self.cellArea))**\
-                             (-0.23)*self.iceThickness**0.57)
+                             0.0493 * pcr.max(0.01, self.channelStorage/(self.dynamicFracWat*self.cellArea))**(-0.23) *
+                             self.iceThickness**0.57)
             manningsWithIce = (0.5*(self.manningsN**1.5+manIce**1.5))**(2./3.)
             wetA = self.channelStorage/self.cellLengthFD
             wetP = 2.*wetA/self.wMean+self.wMean
@@ -1565,8 +1568,7 @@ class Routing(object):
         dischargeUsed = pcr.max(dischargeUsed, self.disChanWaterBody)
         #
         deltaAnoDischarge = dischargeUsed - self.avgDischarge
-        self.avgDischarge = self.avgDischarge +\
-                            deltaAnoDischarge/\
+        self.avgDischarge = self.avgDischarge + deltaAnoDischarge/\
                             pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
         self.avgDischarge = pcr.max(0.0, self.avgDischarge)
         self.m2tDischarge = self.m2tDischarge + pcr.abs(deltaAnoDischarge*(dischargeUsed - self.avgDischarge))
@@ -1574,8 +1576,7 @@ class Routing(object):
         # - short term average discharge
         #
         deltaAnoDischargeShort = dischargeUsed - self.avgDischargeShort
-        self.avgDischargeShort = self.avgDischargeShort +\
-                                 deltaAnoDischargeShort/\
+        self.avgDischargeShort = self.avgDischargeShort + deltaAnoDischargeShort/\
                                  pcr.min(self.maxTimestepsToAvgDischargeShort, self.timestepsToAvgDischarge)
         self.avgDischargeShort = pcr.max(0.0, self.avgDischargeShort)
 
@@ -1583,8 +1584,42 @@ class Routing(object):
         #
         baseflowM3PerSec = groundwater.baseflow * self.cellArea / vos.secondsPerDay()
         deltaAnoBaseflow = baseflowM3PerSec - self.avgBaseflow
-        self.avgBaseflow = self.avgBaseflow +\
-                           deltaAnoBaseflow/\
+        self.avgBaseflow = self.avgBaseflow + deltaAnoBaseflow/\
+                           pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
+        self.avgBaseflow = pcr.max(0.0, self.avgBaseflow)
+
+    def calculate_statistics_routing_only(self):
+
+        # short term average inflow (m3/s) and long term average outflow (m3/s) from lake and reservoirs
+        self.avgInflow  = pcr.ifthen(self.landmask, pcr.cover(self.WaterBodies.avgInflow, 0.0))
+        self.avgOutflow = pcr.ifthen(self.landmask, pcr.cover(self.WaterBodies.avgOutflow, 0.0))
+
+        # short term and long term average discharge (m3/s)
+        # - see: online algorithm on http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+        #
+        # - long term average discharge
+        #
+        dischargeUsed = pcr.max(0.0, self.discharge)
+        dischargeUsed = pcr.max(dischargeUsed, self.disChanWaterBody)
+        #
+        deltaAnoDischarge = dischargeUsed - self.avgDischarge
+        self.avgDischarge = self.avgDischarge + deltaAnoDischarge/\
+                            pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
+        self.avgDischarge = pcr.max(0.0, self.avgDischarge)
+        self.m2tDischarge = self.m2tDischarge + pcr.abs(deltaAnoDischarge*(dischargeUsed - self.avgDischarge))
+        #
+        # - short term average discharge
+        #
+        deltaAnoDischargeShort = dischargeUsed - self.avgDischargeShort
+        self.avgDischargeShort = self.avgDischargeShort + deltaAnoDischargeShort/\
+                                 pcr.min(self.maxTimestepsToAvgDischargeShort, self.timestepsToAvgDischarge)
+        self.avgDischargeShort = pcr.max(0.0, self.avgDischargeShort)
+
+        # long term average baseflow (m3/s); used as proxies for partitioning groundwater and surface water abstractions
+        #
+        baseflowM3PerSec = self.baseflow * self.cellArea / vos.secondsPerDay()
+        deltaAnoBaseflow = baseflowM3PerSec - self.avgBaseflow
+        self.avgBaseflow = self.avgBaseflow + deltaAnoBaseflow/\
                            pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
         self.avgBaseflow = pcr.max(0.0, self.avgBaseflow)
 
@@ -2047,10 +2082,11 @@ class Routing(object):
         self.waterTemp= pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1,self.iceThresTemp+0.1,self.waterTemp)
 
     def energyRouting(self, timeSec):
-        channelTransFrac = cover(pcr.max(pcr.min((self.subDischarge * timeSec) / self.channelStorageTimeBefore, 1.0),0.0), 0.0)
+        channelTransFrac = cover(pcr.max(pcr.min((self.subDischarge * timeSec) / self.channelStorageTimeBefore, 1.0),
+                                         0.0), 0.0)
         #channelTransFrac = cover(pcr.max(pcr.min((self.subDischarge * timeSec) / (self.channelStorageTimeBefore-self.WaterBodies.hypolimnionStorage), 1.0),0.0), 0.0) ##TODO
         dtotEWLat = channelTransFrac*self.volumeEW
-        self.volumeEW = (self.volumeEW +pcr.upstream(self.lddMap,dtotEWLat)-dtotEWLat)
+        self.volumeEW = (self.volumeEW + pcr.upstream(self.lddMap, dtotEWLat)-dtotEWLat)
 
     def energyWaterBody(self):
         self.getEnergyRatio()
@@ -2187,19 +2223,19 @@ class Routing(object):
         self.downstreamDemand = self.estimate_discharge_for_environmental_flow(self.channelStorage)
 
         # get routing/channel parameters/dimensions (based on avgDischarge)
-        # and estimating water bodies fraction ; this is needed for calculating evaporation from water bodies
+        # and estimate water bodies fraction ; this is needed for calculating evaporation from water bodies
         # 
         self.yMean, self.wMean, self.characteristicDistance = \
             self.getRoutingParamAvgDischarge(self.avgDischarge, self.dist2celllength)
-        # 
+
         channelFraction = pcr.max(0.0, pcr.min(1.0, self.wMean * self.cellLengthFD / (self.cellArea)))
-        if currTimeStep.timeStepPCR == 1:
-            if self.floodPlain:
-                self.dynamicFracWat, self.water_height = self.returnFloodedFraction(self.channelStorage)
-                self.dynamicFracWat = pcr.min(pcr.max(self.dynamicFracWat, self.WaterBodies.dynamicFracWat), 1.0)
-            else:
-                self.dynamicFracWat = pcr.max(channelFraction, self.WaterBodies.dynamicFracWat)
-            self.dynamicFracWat = pcr.ifthen(self.landmask, self.dynamicFracWat)
+        # if currTimeStep.timeStepPCR == 1:
+        if self.floodPlain:
+            self.dynamicFracWat, self.water_height = self.returnFloodedFraction(self.channelStorage)
+            self.dynamicFracWat = pcr.min(pcr.max(self.dynamicFracWat, self.WaterBodies.dynamicFracWat), 1.0)
+        else:
+            self.dynamicFracWat = pcr.max(channelFraction, self.WaterBodies.dynamicFracWat)
+        self.dynamicFracWat = pcr.ifthen(self.landmask, self.dynamicFracWat)
 
         # routing methods
         if self.method == "accuTravelTime" or self.method == "simplifiedKinematicWave":
@@ -2352,6 +2388,9 @@ class Routing(object):
         self.disChanWaterBody = pcr.max(0.,self.disChanWaterBody)  # reported channel discharge cannot be negative
         #
         ###############################################################################################################
+
+        # calculate the statistics of long and short term flow values
+        self.calculate_statistics_routing_only()
 
         self.allow_extra_evaporation_and_abstraction = False  # This option is still EXPERIMENTAL (and not recommended)
         if self.allow_extra_evaporation_and_abstraction:

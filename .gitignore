@@ -1,6 +1,6 @@
 ~/
 *.pyc
 model/*.pyc
-__pycache__/
+model/__pycache__/
 *.ini
 

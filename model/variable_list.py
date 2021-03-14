@@ -246,6 +246,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Thickness of ice layer on channel network'
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# channel width
+pcrglobwb_variable_name = 'wMean'
+netcdf_short_name[pcrglobwb_variable_name] = 'wMean'
+netcdf_unit[pcrglobwb_variable_name]       = 'm'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Mean channel width'
+latex_symbol[pcrglobwb_variable_name]      = None
+
 # channel storage
 pcrglobwb_variable_name = 'channelStorage'
 netcdf_short_name[pcrglobwb_variable_name] = 'channelStorage'
@@ -266,6 +277,17 @@ netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = 'Total_in_channel_water_height'
 description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Water height in channel, values include reservoirs and lakes'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Long-term average discharge
+pcrglobwb_variable_name = 'avgDischarge'
+netcdf_short_name[pcrglobwb_variable_name] = 'avgDischarge'
+netcdf_unit[pcrglobwb_variable_name]       = 'm3.s-1'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Long-term average discharge'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # water heat transfer to/from atmosphere
@@ -312,7 +334,7 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Advected energy from land runoff'
 latex_symbol[pcrglobwb_variable_name]      = None
 
-# Advected energy from precipitation
+# Advected energy from precipitation and ice melt
 pcrglobwb_variable_name = 'advectedEnergyPrecip'
 netcdf_short_name[pcrglobwb_variable_name] = 'advectedEnergyPrecip'
 netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
@@ -320,7 +342,18 @@ netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = None
 description[pcrglobwb_variable_name]       = None
-comment[pcrglobwb_variable_name]           = 'Advected energy from precipitation'
+comment[pcrglobwb_variable_name]           = 'Advected energy from precipitation and ice melt'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Kinematic wave parameter alpha
+pcrglobwb_variable_name = 'alpha'
+netcdf_short_name[pcrglobwb_variable_name] = 'alpha'
+netcdf_unit[pcrglobwb_variable_name]       = '1'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Channel area coefficient for kinematic wave, where Area = alpha*Q**beta'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 #~ # remove/clear pcrglobwb_variable_name

@@ -370,12 +370,23 @@ class Reporting(object):
 
         # Stefanie's post processing: reporting lake and reservoir storage (unit: m3)
         # Note: This value is after lake/reservoir outflow.
-        self.waterBodyStorage =\
-            pcr.ifthen(self._model.routing.landmask,
-                       pcr.ifthen(
-                           pcr.scalar(self._model.routing.WaterBodies.waterBodyIds) > 0.,
-                           self._model.routing.WaterBodies.waterBodyStorage))
+        self.waterBodyStorage = pcr.ifthen(self._model.routing.landmask,
+                                           pcr.ifthen(
+                                               pcr.scalar(self._model.routing.WaterBodies.waterBodyIds) > 0.,
+                                               self._model.routing.WaterBodies.waterBodyStorage))
         #
+
+        # Flow statistics
+        if "avgDischarge" in self.variables_for_report:
+            self.avgDischarge = self._model.routing.avgDischarge
+
+        # Channel geometry
+        if "wMean" in self.variables_for_report:
+            self.wMean = self._model.routing.wMean
+
+        # Kinematic wave parameters
+        if "alpha" in self.variables_for_report:
+            self.alpha = self._model.routing.alpha
 
         # Energy balance terms
         if "waterHeatTransfer" in self.variables_for_report:
