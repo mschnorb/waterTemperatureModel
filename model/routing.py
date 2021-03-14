@@ -353,36 +353,80 @@ class Routing(object):
 
         if iniConditions is None:
             # read initial conditions from pcraster maps listed in the ini file (for the first time step of the model;
-            # when the model just starts)
-            self.timestepsToAvgDischarge = vos.readPCRmapClone(iniItems.routingOptions['timestepsToAvgDischargeIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
-            self.channelStorage          = vos.readPCRmapClone(iniItems.routingOptions['channelStorageIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
-            self.readAvlChannelStorage   = vos.readPCRmapClone(iniItems.routingOptions['readAvlChannelStorageIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
-            self.avgDischarge            = vos.readPCRmapClone(iniItems.routingOptions['avgDischargeLongIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
-            self.m2tDischarge            = vos.readPCRmapClone(iniItems.routingOptions['m2tDischargeLongIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
-            self.avgBaseflow             = vos.readPCRmapClone(iniItems.routingOptions['avgBaseflowLongIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
-            self.riverbedExchange        = vos.readPCRmapClone(iniItems.routingOptions['riverbedExchangeIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
+            # when the model just starts); or set sensible default values
 
-            # New initial condition variable introduced in the version 2.0.2: avgDischargeShort 
-            self.avgDischargeShort       = vos.readPCRmapClone(iniItems.routingOptions['avgDischargeShortIni'],
-                                                               self.cloneMap, self.tmpDir, self.inputDir)
+            # avgDischarge and avgBaseflow are mandatory initial conditions
+            self.avgDischarge = vos.readPCRmapClone(iniItems.routingOptions['avgDischargeLongIni'],
+                                                    self.cloneMap, self.tmpDir, self.inputDir)
+            self.avgBaseflow = vos.readPCRmapClone(iniItems.routingOptions['avgBaseflowLongIni'],
+                                                   self.cloneMap, self.tmpDir, self.inputDir)
+
+            # Default timesteps for average discharge is maxTimestepsToAvgDischargeLong
+            if iniItems.routingOptions['timestepsToAvgDischargeIni'] != "None":
+                self.timestepsToAvgDischarge = vos.readPCRmapClone(
+                    iniItems.routingOptions['timestepsToAvgDischargeIni'], self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                self.timestepsToAvgDischarge = pcr.scalar(self.maxTimestepsToAvgDischargeLong)
+
+            # Default channel storage is channel volume with channel geometry at initial average discharge
+            if iniItems.routingOptions['channelStorageIni'] != "None":
+                self.channelStorage = vos.readPCRmapClone(iniItems.routingOptions['channelStorageIni'],
+                                                          self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                ht = pcr.cover(pcr.max(self.eta * pow(self.avgDischarge, self.nu), 0.01), 0.01)
+                wd = pcr.cover(pcr.max(self.tau * pow(self.avgDischarge, self.phi), self.minChannelWidth), 0.01)
+                self.channelStorage = ht * wd * self.cellLengthFD
+
+            # Default value for readily available channel storage is channel storage
+            if iniItems.routingOptions['readAvlChannelStorageIni'] != "None":
+                self.readAvlChannelStorage = vos.readPCRmapClone(iniItems.routingOptions['readAvlChannelStorageIni'],
+                                                                 self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                self.readAvlChannelStorage = self.channelStorage
+
+            # Default value for m2tDischarge is long-term average discharge
+            if iniItems.routingOptions['m2tDischargeLongIni'] != "None":
+                self.m2tDischarge = vos.readPCRmapClone(iniItems.routingOptions['m2tDischargeLongIni'],
+                                                        self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                self.m2tDischarge = self.avgDischarge
+
+            # Default value for riverbed exchange is zero
+            if iniItems.routingOptions['riverbedExchangeIni'] != "None":
+                self.riverbedExchange = vos.readPCRmapClone(iniItems.routingOptions['riverbedExchangeIni'],
+                                                            self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                self.riverbedExchange = pcr.scalar(0.0)
+
+            # Default value for short-term average discharge is 1/12 of long-term average discharge
+            if iniItems.routingOptions['avgDischargeShortIni'] != "None":
+                self.avgDischargeShort = vos.readPCRmapClone(iniItems.routingOptions['avgDischargeShortIni'],
+                                                             self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                self.avgDischargeShort = self.avgDischarge / 12
 
             # Initial conditions needed for kinematic wave methods
-            self.subDischarge = vos.readPCRmapClone(iniItems.routingOptions['subDischargeIni'],
-                                                    self.cloneMap, self.tmpDir, self.inputDir)
-
-            if self.waterTemperature:
-                # Initial conditions needed for temperature module
-                self.waterTemp = vos.readPCRmapClone(iniItems.routingOptions['waterTemperatureIni'],
-                                                     self.cloneMap, self.tmpDir, self.inputDir)
-                self.iceThickness = vos.readPCRmapClone(iniItems.routingOptions['iceThicknessIni'],
+            # Default value for sub-discharge is long-term average discharge
+            if iniItems.routingOptions['subDischargeIni'] != "None":
+                self.subDischarge = vos.readPCRmapClone(iniItems.routingOptions['subDischargeIni'],
                                                         self.cloneMap, self.tmpDir, self.inputDir)
+            else:
+                self.subDischarge = self.avgDischarge
+
+            # Initial conditions needed for temperature module
+            if self.waterTemperature:
+                # Default value for water temperature is 5 degreesC
+                if iniItems.routingOptions['waterTemperatureIni'] != "None":
+                    self.waterTemp = vos.readPCRmapClone(iniItems.routingOptions['waterTemperatureIni'],
+                                                         self.cloneMap, self.tmpDir, self.inputDir)
+                else:
+                    self.waterTemp = pcr.scalar(self.iceThresTemp + 5.0)
+                # Default value for ice thickness is 0 m
+                if iniItems.routingOptions['iceThicknessIni'] != "None":
+                    self.iceThickness = vos.readPCRmapClone(iniItems.routingOptions['iceThicknessIni'],
+                                                            self.cloneMap, self.tmpDir, self.inputDir)
+                else:
+                    self.iceThickness = pcr.scalar(0.0)
         else:
             # read initial conditions from the memory
             self.timestepsToAvgDischarge = iniConditions['routing']['timestepsToAvgDischarge']
@@ -396,29 +440,27 @@ class Routing(object):
             self.subDischarge            = iniConditions['routing']['subDischarge']
 
             if self.waterTemperature:
-                self.waterTemp           = iniConditions['routing']['waterTemperature']
-                self.iceThickness        = iniConditions['routing']['iceThickness']
+                self.waterTemp = iniConditions['routing']['waterTemperature']
+                self.iceThickness = iniConditions['routing']['iceThickness']
 
-        self.channelStorage        = pcr.ifthen(self.landmask, pcr.cover(self.channelStorage,        0.0))
+        self.channelStorage        = pcr.ifthen(self.landmask, pcr.cover(self.channelStorage, 0.0))
         self.readAvlChannelStorage = pcr.ifthen(self.landmask, pcr.cover(self.readAvlChannelStorage, 0.0))
-        self.avgDischarge          = pcr.ifthen(self.landmask, pcr.cover(self.avgDischarge,          0.0))
-        self.m2tDischarge          = pcr.ifthen(self.landmask, pcr.cover(self.m2tDischarge,          0.0))
-        self.avgDischargeShort     = pcr.ifthen(self.landmask, pcr.cover(self.avgDischargeShort,     0.0))
-        self.avgBaseflow           = pcr.ifthen(self.landmask, pcr.cover(self.avgBaseflow,           0.0))
-        self.riverbedExchange      = pcr.ifthen(self.landmask, pcr.cover(self.riverbedExchange,      0.0))
-        self.subDischarge          = pcr.ifthen(self.landmask, pcr.cover(self.subDischarge ,         0.0))
-        if self.floodPlain:
-            self.subDischarge        = pcr.ifthen(self.landmask, pcr.cover(self.subDischarge ,         0.0))
+        self.avgDischarge          = pcr.ifthen(self.landmask, pcr.cover(self.avgDischarge, 0.0))
+        self.m2tDischarge          = pcr.ifthen(self.landmask, pcr.cover(self.m2tDischarge, 0.0))
+        self.avgDischargeShort     = pcr.ifthen(self.landmask, pcr.cover(self.avgDischargeShort, 0.0))
+        self.avgBaseflow           = pcr.ifthen(self.landmask, pcr.cover(self.avgBaseflow, 0.0))
+        self.riverbedExchange      = pcr.ifthen(self.landmask, pcr.cover(self.riverbedExchange, 0.0))
+        self.subDischarge          = pcr.ifthen(self.landmask, pcr.cover(self.subDischarge, 0.0))
 
         self.readAvlChannelStorage = pcr.min(self.readAvlChannelStorage, self.channelStorage)
         self.readAvlChannelStorage = pcr.max(self.readAvlChannelStorage, 0.0)
 
         if self.waterTemperature:
-            self.waterTemp             = pcr.ifthen(self.landmask, pcr.cover(self.waterTemp ,         0.0))
-            self.iceThickness          = pcr.ifthen(self.landmask, pcr.cover(self.iceThickness ,         0.0))
+            self.waterTemp = pcr.ifthen(self.landmask, pcr.cover(self.waterTemp, 0.0))
+            self.iceThickness = pcr.ifthen(self.landmask, pcr.cover(self.iceThickness, 0.0))
             self.channelStorageTimeBefore = self.channelStorage
             self.totEW = self.channelStorage * self.waterTemp*self.specificHeatWater * self.densityWater
-            self.temp_water_height = yMean = self.eta * pow(self.avgDischarge, self.nu)
+            self.temp_water_height = self.eta * pow(self.avgDischarge, self.nu)
         # make sure that timestepsToAvgDischarge is consistent (or the same) for the entire map:
         try:
             self.timestepsToAvgDischarge = pcr.mapmaximum(self.timestepsToAvgDischarge)
@@ -435,14 +477,17 @@ class Routing(object):
         #           long term average outflow (m3/s)
         if iniConditions is None:
             # read initial conditions from pcraster maps listed in the ini file (for the first time step of the model;
-            # when the model just starts)
-            self.avgInflow  = vos.readPCRmapClone(iniItems.routingOptions['avgLakeReservoirInflowShortIni'],self.cloneMap,self.tmpDir,self.inputDir)
-            self.avgOutflow = vos.readPCRmapClone(iniItems.routingOptions['avgLakeReservoirOutflowLongIni'],self.cloneMap,self.tmpDir,self.inputDir)
+            # when the model just starts); or set sensible defaults
+            self.avgInflow = vos.readPCRmapClone(iniItems.routingOptions['avgLakeReservoirInflowShortIni'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+            self.avgOutflow = vos.readPCRmapClone(iniItems.routingOptions['avgLakeReservoirOutflowLongIni'],
+                                                  self.cloneMap, self.tmpDir, self.inputDir)
             if iniItems.routingOptions['waterBodyStorageIni'] != "None":
-                self.waterBodyStorage = vos.readPCRmapClone(iniItems.routingOptions['waterBodyStorageIni'],self.cloneMap,self.tmpDir,self.inputDir)
+                self.waterBodyStorage = vos.readPCRmapClone(iniItems.routingOptions['waterBodyStorageIni'],
+                                                            self.cloneMap, self.tmpDir, self.inputDir)
                 self.waterBodyStorage = pcr.ifthen(self.landmask, self.waterBodyStorage)
             else:
-                self.waterBodyStorage = None
+                self.waterBodyStorage = self.channelStorage
         else:
             # read initial conditions from the memory
             self.avgInflow        = iniConditions['routing']['avgLakeReservoirInflowShort']
@@ -2244,7 +2289,6 @@ class Routing(object):
         # estimate oxygen content at 100% saturation
         #if self.waterTemperature:
         #    self.calculate_oxygen()
-
 
     def simple_update_routing_only(self, currTimeStep, meteo):
 
