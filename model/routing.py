@@ -1591,7 +1591,7 @@ class Routing(object):
     def calculate_statistics_routing_only(self):
 
         # short term average inflow (m3/s) and long term average outflow (m3/s) from lake and reservoirs
-        self.avgInflow  = pcr.ifthen(self.landmask, pcr.cover(self.WaterBodies.avgInflow, 0.0))
+        self.avgInflow = pcr.ifthen(self.landmask, pcr.cover(self.WaterBodies.avgInflow, 0.0))
         self.avgOutflow = pcr.ifthen(self.landmask, pcr.cover(self.WaterBodies.avgOutflow, 0.0))
 
         # short term and long term average discharge (m3/s)
@@ -1614,14 +1614,6 @@ class Routing(object):
         self.avgDischargeShort = self.avgDischargeShort + deltaAnoDischargeShort/\
                                  pcr.min(self.maxTimestepsToAvgDischargeShort, self.timestepsToAvgDischarge)
         self.avgDischargeShort = pcr.max(0.0, self.avgDischargeShort)
-
-        # long term average baseflow (m3/s); used as proxies for partitioning groundwater and surface water abstractions
-        #
-        baseflowM3PerSec = self.baseflow * self.cellArea / vos.secondsPerDay()
-        deltaAnoBaseflow = baseflowM3PerSec - self.avgBaseflow
-        self.avgBaseflow = self.avgBaseflow + deltaAnoBaseflow/\
-                           pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
-        self.avgBaseflow = pcr.max(0.0, self.avgBaseflow)
 
     def estimate_discharge_for_environmental_flow(self, channelStorage):
 
