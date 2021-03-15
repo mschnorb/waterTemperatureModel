@@ -404,6 +404,10 @@ class Reporting(object):
         if "advectedEnergyPrecip" in self.variables_for_report:
             self.advectedEnergyPrecip = self._model.routing.advectedEnergyPrecip
 
+        # Water quality
+        if "O2" in self.variables_for_report:
+            self.O2 = self._model.routing.O2
+
     def report(self):
 
         self.post_processing()

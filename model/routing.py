@@ -706,8 +706,6 @@ class Routing(object):
                                                                                 self.dynamicFracWat) * self.cellArea))
 
             # total discharge_volume (m3) until this present i_loop
-            #if i_loop == 0:
-            #    discharge_volume = pcr.scalar(0.0)
             discharge_volume += self.subDischarge * length_of_sub_time_step
 
             if self.waterTemperature:
@@ -2287,8 +2285,8 @@ class Routing(object):
         self.readAvlChannelStorage = self.estimate_available_volume_for_abstraction(self.channelStorage)
 
         # estimate oxygen content at 100% saturation
-        #if self.waterTemperature:
-        #    self.calculate_oxygen()
+        if self.waterTemperature:
+            self.calculate_oxygen()
 
     def simple_update_routing_only(self, currTimeStep, meteo):
 
@@ -2443,7 +2441,7 @@ class Routing(object):
         # - reduced by evaporation that has been calculated in the landSurface module
         waterBodyPotEvapOverSurfaceWaterArea = \
             pcr.ifthen(self.landmask, pcr.max(0.0, self.waterKC * meteo.referencePotET))
-        # TODO -landSurface.actualET ))  # These values are NOT over the entire cell area.
+        # These values are NOT over the entire cell area.
 
         # potential evaporation from water bodies over the entire cell area (m/day)
         waterBodyPotEvap = waterBodyPotEvapOverSurfaceWaterArea * self.dynamicFracWat
@@ -2605,6 +2603,8 @@ class Routing(object):
         self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1, self.iceThresTemp+0.1, self.waterTemp)
 
     def calculate_oxygen(self, P=1):
+        # Equilibrium oxygen concentration (100% saturation) (mg/L) as a function of water temperature (degC) and
+        # local non-standard pressure, P (atm)
         self.O2 = ((pcr.exp(7.7117-1.31403 * pcr.ln(self.waterTemp+45.93))) *
                    P * (1-pcr.exp(11.8571-(3840.7/(self.waterTemp+273.15))-(216961/((self.waterTemp+273.15)**2)))/P) *
                    (1-(0.000975-(0.00001426*self.waterTemp)+(0.00000006436*(self.waterTemp**2)))*P)) /\

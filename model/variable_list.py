@@ -356,6 +356,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Channel area coefficient for kinematic wave, where Area = alpha*Q**beta'
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# Saturation dissolved oxygen content
+pcrglobwb_variable_name = 'O2'
+netcdf_short_name[pcrglobwb_variable_name] = 'satOxygenContent'
+netcdf_unit[pcrglobwb_variable_name]       = 'mg.L-1'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Equilibrium oxygen concentration at non-standard pressure'
+latex_symbol[pcrglobwb_variable_name]      = None
+
 #~ # remove/clear pcrglobwb_variable_name
 #~ pcrglobwb_variable_name = None
 #~ del pcrglobwb_variable_name
