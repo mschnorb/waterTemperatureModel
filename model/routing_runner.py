@@ -3,6 +3,7 @@
 
 import sys
 import logging
+import cProfile, pstats, io
 
 from pcraster.framework import DynamicModel
 from pcraster.framework import DynamicFramework
@@ -88,5 +89,14 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
-
+    # sys.exit(main())
+    # sys.exit(cProfile.run('main()'))
+    pr = cProfile.Profile()
+    pr.enable()
+    main()
+    pr.disable()
+    s = io.StringIO()
+    ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+    ps.print_stats()
+    print(s.getvalue())
+    sys.exit(0)
