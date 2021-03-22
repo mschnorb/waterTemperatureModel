@@ -173,7 +173,7 @@ class Routing(object):
         self.gradient = pcr.max(minGradient, pcr.cover(self.gradient, minGradient))
 
         # initiate/create WaterBody class
-        self.WaterBodies = waterBodies.WaterBodies(iniItems, self.landmask)
+        self.WaterBodies = waterBodies.WaterBodies(iniItems, self.landmask, self.minChannelWidth)
 
         self.fileCropKC = vos.getFullPath(iniItems.routingOptions['cropCoefficientWaterNC'], self.inputDir)
 
@@ -2342,6 +2342,8 @@ class Routing(object):
                                 currTimeStep,
                                 self.avgDischarge,
                                 vos.secondsPerDay(),
+                                self.tau,
+                                self.phi,
                                 self.downstreamDemand)
 
         # waterBodyStorage (m3) after outflow; values given are per water body id (not per cell)
