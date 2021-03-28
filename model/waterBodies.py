@@ -82,7 +82,7 @@ class WaterBodies(object):
             year_used = self.dateForNaturalCondition[0:4]
 
         # Initialise variables
-        self.waterBodyIds = pcr.nominal(0)  # waterBody ids
+        self.waterBodyIds = pcr.nominal(0)   # waterBody ids
         self.waterBodyOut = pcr.boolean(0)   # waterBody outlets
         self.waterBodyTyp = pcr.nominal(0)   # water body types
         self.fracWat = pcr.scalar(0.0)       # fraction of surface water bodies (dimensionless)
@@ -125,31 +125,6 @@ class WaterBodies(object):
         # boolean map for water body outlets:
         self.waterBodyOut = pcr.ifthen(pcr.scalar(self.waterBodyOut) > 0., pcr.boolean(1))
 
-        # correcting water body ids and outlets (exclude all water bodies with surfaceArea = 0)
-        self.waterBodyIds = pcr.ifthen(self.waterBodyArea > 0., self.waterBodyIds)
-        self.waterBodyOut = pcr.ifthen(pcr.boolean(self.waterBodyIds), self.waterBodyOut)
-
-        # water body types:
-        # - 2 = reservoirs (regulated discharge)
-        # - 1 = lakes (weirFormula)
-        # - 0 = non lakes or reservoirs (e.g. wetland)
-        if self.useNetCDF:
-            self.waterBodyTyp = pcr.cover(vos.netcdf2PCRobjClone(self.ncFileInp, 'waterBodyTyp',
-                                                                 date_used, useDoy='yearly',
-                                                                 cloneMapFileName=self.cloneMap), pcr.scalar(0.0))
-        else:
-            self.waterBodyTyp = vos.readPCRmapClone(self.waterBodyTypInp+str(year_used)+".map",
-                                                    self.cloneMap, self.tmpDir, self.inputDir, False, None, True)
-        # excluding wetlands (waterBodyTyp = 0) in all functions related to lakes/reservoirs
-        self.waterBodyTyp = pcr.ifthen(pcr.scalar(self.waterBodyTyp) > 0, pcr.nominal(self.waterBodyTyp))
-        # choose only one type: either lake or reservoir
-        self.waterBodyTyp = pcr.areamajority(self.waterBodyTyp, self.waterBodyIds)
-        self.waterBodyTyp = pcr.ifthen(pcr.scalar(self.waterBodyTyp) > 0, pcr.nominal(self.waterBodyTyp))
-        self.waterBodyTyp = pcr.ifthen(pcr.boolean(self.waterBodyIds), self.waterBodyTyp)
-        # correcting lakes and reservoirs ids and outlets
-        self.waterBodyIds = pcr.ifthen(pcr.scalar(self.waterBodyTyp) > 0, self.waterBodyIds)
-        self.waterBodyOut = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0, self.waterBodyOut)
-
         # fraction of surface water bodies
         if self.useNetCDF:
             self.fracWat = vos.netcdf2PCRobjClone(self.ncFileInp, 'fracWaterInp',
@@ -185,6 +160,31 @@ class WaterBodies(object):
             pcr.scalar(self.waterBodyIds) > 0., self.fracWat/pcr.areatotal(self.fracWat, self.waterBodyIds)), 0.)
         # set in
         self.dynamicFracWat = self.fracWat
+
+        # correcting water body ids and outlets (exclude all water bodies with surfaceArea = 0)
+        self.waterBodyIds = pcr.ifthen(self.waterBodyArea > 0., self.waterBodyIds)
+        self.waterBodyOut = pcr.ifthen(pcr.boolean(self.waterBodyIds), self.waterBodyOut)
+
+        # water body types:
+        # - 2 = reservoirs (regulated discharge)
+        # - 1 = lakes (weirFormula)
+        # - 0 = non lakes or reservoirs (e.g. wetland)
+        if self.useNetCDF:
+            self.waterBodyTyp = pcr.cover(vos.netcdf2PCRobjClone(self.ncFileInp, 'waterBodyTyp',
+                                                                 date_used, useDoy='yearly',
+                                                                 cloneMapFileName=self.cloneMap), pcr.scalar(0.0))
+        else:
+            self.waterBodyTyp = vos.readPCRmapClone(self.waterBodyTypInp+str(year_used)+".map",
+                                                    self.cloneMap, self.tmpDir, self.inputDir, False, None, True)
+        # excluding wetlands (waterBodyTyp = 0) in all functions related to lakes/reservoirs
+        self.waterBodyTyp = pcr.ifthen(pcr.scalar(self.waterBodyTyp) > 0, pcr.nominal(self.waterBodyTyp))
+        # choose only one type: either lake or reservoir
+        self.waterBodyTyp = pcr.areamajority(self.waterBodyTyp, self.waterBodyIds)
+        self.waterBodyTyp = pcr.ifthen(pcr.scalar(self.waterBodyTyp) > 0, pcr.nominal(self.waterBodyTyp))
+        self.waterBodyTyp = pcr.ifthen(pcr.boolean(self.waterBodyIds), self.waterBodyTyp)
+        # correcting lakes and reservoirs ids and outlets
+        self.waterBodyIds = pcr.ifthen(pcr.scalar(self.waterBodyTyp) > 0, self.waterBodyIds)
+        self.waterBodyOut = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0, self.waterBodyOut)
 
         # water body shape factor
         if self.useNetCDF:
