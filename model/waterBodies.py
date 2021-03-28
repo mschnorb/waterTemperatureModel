@@ -49,12 +49,12 @@ class WaterBodies(object):
             self.useNetCDF = True
             self.ncFileInp = vos.getFullPath(iniItems.routingOptions['waterBodyInputNC'], self.inputDir)
 
-        # minimum width (m) used in the weir formula
-        # TODO: define minWeirWidth based on the GLWD, GRanD database and/or bankfull discharge formula
-        # self.minWeirWidth = 10.
-        self.minWeirWidth = minChannelWidth
+        # Parameters for weir formula
+        self.minWeirWidth = minChannelWidth  # minimum width (m) used in the weir formula
+        self.weirCoeff = vos.readPCRmapClone(iniItems.routingOptions['weirCoeff'],
+                                             self.cloneMap, self.tmpDir, self.inputDir)
 
-        # lower and upper limits at which reservoir release is terminated and 
+        # lower and upper limits at which reservoir release is terminated and
         # at which reservoir release is equal to long-term average outflow
         self.minResvrFrac = 0.10
         self.maxResvrFrac = 0.75
@@ -417,8 +417,7 @@ class WaterBodies(object):
 
     def weirFormula(self, waterHeight, weirWidth):  # output: m3/s
         sillElev = pcr.scalar(0.0)
-        weirCoef = pcr.scalar(1.0)
-        weirFormula = (1.7*weirCoef*pcr.max(0, waterHeight-sillElev)**1.5) * weirWidth  # m3/s
+        weirFormula = (1.7 * self.weirCoeff * pcr.max(0, waterHeight-sillElev)**1.5) * weirWidth  # m3/s
         return weirFormula
 
     def getLakeOutflow(self, avgChannelDischarge, tau, phi, length_of_time_step=vos.secondsPerDay()):
