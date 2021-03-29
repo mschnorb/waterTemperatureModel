@@ -88,9 +88,9 @@ class Routing(object):
             self.directRunoffRead = False
 
         # TODO: 26 Feb 2014, Edwin found that reasonable runs are only found if all of these options = True.
-        self.includeWaterBodies = True
-        self.includeLakes = True
-        self.includeReservoirs = True
+        #self.includeWaterBodies = True
+        #self.includeLakes = True
+        #self.includeReservoirs = True
 
         # local drainage direction:
         self.lddMap = vos.readPCRmapClone(iniItems.routingOptions['lddMap'],
@@ -2341,10 +2341,10 @@ class Routing(object):
                                 self.maxTimestepsToAvgDischargeLong,
                                 currTimeStep,
                                 self.avgDischarge,
-                                vos.secondsPerDay(),
                                 self.tau,
                                 self.phi,
-                                self.downstreamDemand)
+                                length_of_time_step=vos.secondsPerDay(),
+                                downstreamDemand=self.downstreamDemand)
 
         # waterBodyStorage (m3) after outflow; values given are per water body id (not per cell)
         self.waterBodyStorage = self.WaterBodies.waterBodyStorage
