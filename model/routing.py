@@ -87,11 +87,6 @@ class Routing(object):
         except:
             self.directRunoffRead = False
 
-        # TODO: 26 Feb 2014, Edwin found that reasonable runs are only found if all of these options = True.
-        #self.includeWaterBodies = True
-        #self.includeLakes = True
-        #self.includeReservoirs = True
-
         # local drainage direction:
         self.lddMap = vos.readPCRmapClone(iniItems.routingOptions['lddMap'],
                                           self.cloneMap, self.tmpDir, self.inputDir, True)
@@ -345,9 +340,6 @@ class Routing(object):
 
         # get the initialConditions
         self.getICs(iniItems, initialConditions)
-
-        # initiate old style reporting  # TODO: remove this!
-        #self.initiate_old_style_routing_reporting(iniItems)
 
     def getICs(self, iniItems, iniConditions=None):
 
