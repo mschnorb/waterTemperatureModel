@@ -351,17 +351,15 @@ class WaterBodies(object):
         # inflowInM3PerSec (m3/s)
         inflowInM3PerSec = self.inflow / length_of_time_step
 
-        # updating (short term) average inflow (m3/s) ; 
-        # - needed to constrain lake outflow:
-        #
+        # updating (short term) average inflow (m3/s); needed to constrain lake outflow;
+        # for reference see the "weighted incremental algorithm" in
+        # http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
         temp = pcr.max(1.0, pcr.min(maxTimestepsToAvgDischargeShort,
                                     self.timestepsToAvgDischarge - 1.0 + length_of_time_step / vos.secondsPerDay()))
         deltaInflow = inflowInM3PerSec - self.avgInflow
         R = deltaInflow * (length_of_time_step / vos.secondsPerDay()) / temp
         self.avgInflow = self.avgInflow + R
         self.avgInflow = pcr.max(0.0, self.avgInflow)
-        #
-        # for the reference, see the "weighted incremental algorithm" in http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance                        
 
         # updating waterBodyStorage (m3)
         self.waterBodyStorage = newStorageAtLakeAndReservoirs
@@ -388,28 +386,21 @@ class WaterBodies(object):
         # make sure that all water bodies have outflow:
         self.waterBodyOutflow = pcr.max(0.,
                                         pcr.cover(self.waterBodyOutflow, 0.0))
-
-        # limit outflow to available storage
-        factor = 0.25  # to avoid flip flop 
-        self.waterBodyOutflow = pcr.min(self.waterBodyStorage * factor, self.waterBodyOutflow)  # unit: m3
-        # use round values 
+        # use round values
         self.waterBodyOutflow = pcr.rounddown(self.waterBodyOutflow/1.)*1.  # unit: m3
 
         # outflow rate in m3 per sec
         waterBodyOutflowInM3PerSec = self.waterBodyOutflow / length_of_time_step  # unit: m3/s
 
-        # updating (long term) average outflow (m3/s) ; 
-        # - needed to constrain/maintain reservoir outflow:
-        #
+        # updating (long term) average outflow (m3/s); needed to constrain/maintain reservoir outflow;
+        # for the reference, see the "weighted incremental algorithm" in
+        # http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
         temp = pcr.max(1.0, pcr.min(maxTimestepsToAvgDischargeLong,
                                     self.timestepsToAvgDischarge - 1.0 + length_of_time_step / vos.secondsPerDay()))
         deltaOutflow = waterBodyOutflowInM3PerSec - self.avgOutflow
         R = deltaOutflow * (length_of_time_step / vos.secondsPerDay()) / temp
         self.avgOutflow = self.avgOutflow + R
         self.avgOutflow = pcr.max(0.0, self.avgOutflow)
-        #
-        # for the reference, see the "weighted incremental algorithm" in
-        # http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 
         # update waterBodyStorage (after outflow):
         self.waterBodyStorage = self.waterBodyStorage - self.waterBodyOutflow
@@ -422,31 +413,31 @@ class WaterBodies(object):
 
     def getLakeOutflow(self, avgChannelDischarge, tau, phi, length_of_time_step=vos.secondsPerDay()):
 
-        # waterHeight (m): temporary variable, a function of storage:
-        minWaterHeight = 0.001  # (m) Rens used 0.001 m as the limit
-        # this is to make sure there is always lake outflow,
-        # but it will be still limited by available self.waterBodyStorage
-        waterHeight = pcr.cover(
-            pcr.max(minWaterHeight,
-                    (self.waterBodyStorage - pcr.cover(self.waterBodyCap, 0.0))/self.waterBodyArea), 0.)
+        # Estimate lake outflow based on the volume of live storage, where live storage is lake volume
+        # located above the sill elevation (sill elevation is taken as the bottom of the outflow channel).
+        # It is taken that the maximum water body capacity represents the storage volume at the sill elevation.
+        # Therefore, live storage must be positive for outflow to occur.
+        # Ensure that the following relationship holds: 0.0 <= lakeOutflow <= liveStorage
+
+        # Estimate live storage (current storage minus maximum water body capacity)
+        liveStorage = pcr.max(self.waterBodyStorage - pcr.cover(self.waterBodyCap, 0.0), 0.0)
+        # waterHeight (m): water height above sill; a function of live storage
+        waterHeight = pcr.cover(liveStorage/self.waterBodyArea)
 
         avgOutflow = self.avgOutflow
         # This is needed when new lakes/reservoirs introduced (its avgOutflow is still zero)
         avgOutflow = pcr.ifthenelse(avgOutflow > 0., avgOutflow, pcr.max(avgChannelDischarge, self.avgInflow, 0.001))
         avgOutflow = pcr.areamaximum(avgOutflow, self.waterBodyIds)
 
-        # weirWidth (m) - estimated from avgOutflow (m3/s) using the bankfull discharge formula
-        bankfullWidth = pcr.cover(tau * pow(avgOutflow, phi), 0.)
-        weirWidthUsed = bankfullWidth
+        # weirWidth (m) - estimated from avgOutflow (m3/s) using bankfull geometry
+        weirWidthUsed = pcr.cover(tau * pow(avgOutflow, phi), 0.)
         weirWidthUsed = pcr.max(weirWidthUsed, self.minWeirWidth)
         weirWidthUsed = pcr.cover(pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0., weirWidthUsed), 0.0)
 
-        # avgInflow <= lakeOutflow (weirFormula) <= waterBodyStorage
-        lakeOutflowInM3PerSec = pcr.max(self.weirFormula(waterHeight, weirWidthUsed), self.avgInflow)  # unit: m3/s
-
         # estimate volume of water released by lakes
+        lakeOutflowInM3PerSec = self.weirFormula(waterHeight, weirWidthUsed)  # unit: m3/s
         lakeOutflow = lakeOutflowInM3PerSec * length_of_time_step  # unit: m3
-        lakeOutflow = pcr.min(self.waterBodyStorage, lakeOutflow)
+        lakeOutflow = pcr.min(liveStorage, lakeOutflow)  # lake outflow can't exceed live storage
         #
         lakeOutflow = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0., lakeOutflow)
         lakeOutflow = pcr.ifthen(pcr.scalar(self.waterBodyTyp) == 1, lakeOutflow)
