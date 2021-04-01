@@ -375,6 +375,9 @@ class Reporting(object):
                                                pcr.scalar(self._model.routing.WaterBodies.waterBodyIds) > 0.,
                                                self._model.routing.WaterBodies.waterBodyStorage))
         #
+        # Water body variables
+        if "waterBodyOutflow" in self.variables_for_report:
+            self.waterBodyOutflow = self._model.routing.waterBodyOutflow
 
         # Flow statistics
         if "avgDischarge" in self.variables_for_report:

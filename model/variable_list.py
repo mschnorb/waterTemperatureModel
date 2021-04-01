@@ -213,6 +213,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'The values given are for every lake and reservoir ids (not per cells) and after lake/reservoir releases/outflows.'
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# waterBodyOutflow
+pcrglobwb_variable_name = 'waterBodyOutflow'
+netcdf_short_name[pcrglobwb_variable_name] = 'waterbody_outflow'
+netcdf_unit[pcrglobwb_variable_name]       = 'm3'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Values given at the outlet of every lake and reservoir.'
+latex_symbol[pcrglobwb_variable_name]      = None
+
 # dynamic water fraction
 pcrglobwb_variable_name = 'dynamicFracWat'
 netcdf_short_name[pcrglobwb_variable_name] = 'dynamic_water_fraction'
