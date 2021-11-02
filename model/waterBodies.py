@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import virtualOS as vos
-
 from pcraster.framework import *
 import pcraster as pcr
-
 import logging
 logger = logging.getLogger(__name__)
 
@@ -407,8 +405,9 @@ class WaterBodies(object):
         self.waterBodyStorage = pcr.max(0.0, self.waterBodyStorage)
 
     def weirFormula(self, waterHeight, weirWidth):  # output: m3/s
-        sillElev = pcr.scalar(0.0)
-        weirFormula = (1.7 * self.weirCoeff * pcr.max(0, waterHeight-sillElev)**1.5) * weirWidth  # m3/s
+        # General equation for broad-crested weir (e.g. Akan, A. Osman, and A Osman Akan.
+        # Open Channel Hydraulics, Elsevier Science & Technology, 2006.
+        weirFormula = self.weirCoeff * (2.0 * 9.81)**(1/2) * weirWidth * pcr.max(0, waterHeight)**1.5  # m3/s
         return weirFormula
 
     def getLakeOutflow(self, avgChannelDischarge, tau, phi, length_of_time_step=vos.secondsPerDay()):

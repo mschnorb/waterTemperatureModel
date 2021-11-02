@@ -2109,9 +2109,10 @@ class Routing(object):
         self.waterTemp= pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1,self.iceThresTemp+0.1,self.waterTemp)
 
     def energyRouting(self, timeSec):
-        channelTransFrac = cover(pcr.max(pcr.min((self.subDischarge * timeSec) / self.channelStorageTimeBefore, 1.0),
-                                         0.0), 0.0)
-        #channelTransFrac = cover(pcr.max(pcr.min((self.subDischarge * timeSec) / (self.channelStorageTimeBefore-self.WaterBodies.hypolimnionStorage), 1.0),0.0), 0.0) ##TODO
+        channelTransFrac = pcr.cover(
+            pcr.max(pcr.min((self.subDischarge * timeSec) / self.channelStorageTimeBefore, 1.0), 0.0), 0.0)
+        # channelTransFrac = pcr.cover(pcr.max(pcr.min((self.subDischarge * timeSec) /
+        # (self.channelStorageTimeBefore-self.WaterBodies.hypolimnionStorage), 1.0),0.0), 0.0) ##TODO
         dtotEWLat = channelTransFrac*self.volumeEW
         self.volumeEW = (self.volumeEW + pcr.upstream(self.lddMap, dtotEWLat)-dtotEWLat)
 
