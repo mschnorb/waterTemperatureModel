@@ -2567,13 +2567,6 @@ class Routing(object):
         advectedEnergyPrecip = advectedEnergyPrecip + deltaIceThickness_melt * self.iceThresTemp * \
                                self.specificHeatWater * self.densityWater/timeSec
 
-        # Capture energy balance terms for output
-        self.waterHeatTransfer = waterHeatTransfer
-        self.radiativeHeatTransfer = radiativeHeatTransfer
-        self.latentHeatTransfer = latentHeat
-        self.advectedEnergyInflow = advectedEnergyInflow
-        self.advectedEnergyPrecip = advectedEnergyPrecip
-
         # Change in energy storage and resulting temperature
         totEWC = totStorLoc * self.specificHeatWater * self.densityWater
         dtotEWC = dtotStorLoc * self.specificHeatWater * self.densityWater
@@ -2593,9 +2586,21 @@ class Routing(object):
 
         self.temp_water_height = pcr.max(1e-16, totStorLoc + dtotStorLoc)
         self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,
-                                        self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater),
+                                        self.totEW / self.temp_water_height / (
+                                                    self.specificHeatWater * self.densityWater),
                                         self.temperatureKelvin)
-        self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1, self.iceThresTemp+0.1, self.waterTemp)
+        self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp + 0.1, self.iceThresTemp + 0.1,
+                                        self.waterTemp)
+
+        # Capture local energy balance terms for output
+        self.waterHeatTransfer = waterHeatTransfer
+        self.iceHeatTransfer = iceHeatTransfer
+        self.radiativeHeatTransfer = radiativeHeatTransfer
+        self.latentHeatTransfer = latentHeat
+        self.advectedEnergyInflow = advectedEnergyInflow
+        self.advectedEnergyPrecip = advectedEnergyPrecip
+        self.dtotEWLoc = dtotEWLoc
+        self.dtotEWAdv = dtotEWAdv
 
     def calculate_oxygen(self, P=1):
         # Equilibrium oxygen concentration (100% saturation) (mg/L) as a function of water temperature (degC) and

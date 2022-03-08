@@ -290,6 +290,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Water height in channel, values include reservoirs and lakes'
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# Temporary water height
+pcrglobwb_variable_name = 'tempWaterHeight'
+netcdf_short_name[pcrglobwb_variable_name] = 'tempWaterHeight'
+netcdf_unit[pcrglobwb_variable_name]       = 'm'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Temporary water height in channel for water temperature calculation'
+latex_symbol[pcrglobwb_variable_name]      = None
+
 # Long-term average discharge
 pcrglobwb_variable_name = 'avgDischarge'
 netcdf_short_name[pcrglobwb_variable_name] = 'avgDischarge'
@@ -310,6 +321,17 @@ netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = None
 description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Sensible heat transfer at water surface'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# ice heat transfer to/from water and atmosphere
+pcrglobwb_variable_name = 'iceHeatTransfer'
+netcdf_short_name[pcrglobwb_variable_name] = 'iceHeatTransfer'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Sensible heat transfer at ice surface'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # radiative heat transfer at water surface
@@ -354,6 +376,39 @@ netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = None
 description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Advected energy from precipitation and ice melt'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Change in energy storage from local surface energy balance
+pcrglobwb_variable_name = 'dtotEWLoc'
+netcdf_short_name[pcrglobwb_variable_name] = 'dtotEWLoc'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Change in energy storage from local surface energy balance'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Change in energy storage from local advected energy
+pcrglobwb_variable_name = 'dtotEWAdv'
+netcdf_short_name[pcrglobwb_variable_name] = 'dtotEWAdv'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Change in energy storage from local advected energy'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Total energy storage
+pcrglobwb_variable_name = 'totEW'
+netcdf_short_name[pcrglobwb_variable_name] = 'totEW'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = None
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Total energy storage'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # Kinematic wave parameter alpha

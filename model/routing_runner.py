@@ -3,7 +3,7 @@
 
 import sys
 import logging
-import cProfile, pstats, io
+# import cProfile, pstats, io
 
 from pcraster.framework import DynamicModel
 from pcraster.framework import DynamicFramework

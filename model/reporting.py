@@ -387,6 +387,9 @@ class Reporting(object):
         if "wMean" in self.variables_for_report:
             self.wMean = self._model.routing.wMean
 
+        if "tempWaterHeight" in self.variables_for_report:
+            self.tempWaterHeight = self._model.routing.temp_water_height
+
         # Kinematic wave parameters
         if "alpha" in self.variables_for_report:
             self.alpha = self._model.routing.alpha
@@ -394,6 +397,9 @@ class Reporting(object):
         # Energy balance terms
         if "waterHeatTransfer" in self.variables_for_report:
             self.waterHeatTransfer = self._model.routing.waterHeatTransfer
+
+        if "iceHeatTransfer" in self.variables_for_report:
+            self.iceHeatTransfer = self._model.routing.iceHeatTransfer
 
         if "radiativeHeatTransfer" in self.variables_for_report:
             self.radiativeHeatTransfer = self._model.routing.radiativeHeatTransfer
@@ -406,6 +412,15 @@ class Reporting(object):
 
         if "advectedEnergyPrecip" in self.variables_for_report:
             self.advectedEnergyPrecip = self._model.routing.advectedEnergyPrecip
+
+        if "dtotEWLoc" in self.variables_for_report:
+            self.dtotEWLoc = self._model.routing.dtotEWLoc
+
+        if "dtotEWAdv" in self.variables_for_report:
+            self.dtotEWAdv = self._model.routing.dtotEWAdv
+
+        if "totEW" in self.variables_for_report:
+            self.totEW = self._model.routing.totEW
 
         # Water quality
         if "O2" in self.variables_for_report:
