@@ -45,7 +45,9 @@ class Routing(object):
 
         if self.waterTemperature:
             result['waterTemperature'] = self.waterTemp  # C; water temperature
-            result['iceThickness'] = self.iceThickness   # C; iceThickness
+            result['iceThickness'] = self.iceThickness   # m; iceThickness
+            if self.soilTempMethod == 'smoothT':
+                result['soilTemperature'] = self.soilTemperatureKelvin  # K; soil temperature
 
         return result
 
@@ -329,10 +331,16 @@ class Routing(object):
             # Path to daily meteorology files
             self.radShortFileNC = iniItems.meteoOptions['radiationShortNC']
             self.vapFileNC = iniItems.meteoOptions['vaporNC']
-            self.annualTNC = iniItems.meteoOptions['annualAvgTNC']
             # Ice cover parameters
             self.maxIceThickness = 3.0
             self.deltaIceThickness = 0.0
+            # Method and data for estimating soil temperature
+            self.soilTempMethod = iniItems.meteoOptions['soilTemperatureMethod']
+            if self.soilTempMethod == 'annualT':
+                self.annualTFileNC = iniItems.meteoOptions['annualAvgTNC']
+            if self.soilTempMethod == 'smoothT':
+                self.kappa = vos.readPCRmapClone(iniItems.meteoOptions['kappa'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
         try:
           self.routingOnly = iniItems.routingOptions['routingOnly'] == "True"
         except:
@@ -413,12 +421,23 @@ class Routing(object):
                                                          self.cloneMap, self.tmpDir, self.inputDir)
                 else:
                     self.waterTemp = pcr.scalar(self.iceThresTemp + 5.0)
+
                 # Default value for ice thickness is 0 m
                 if iniItems.routingOptions['iceThicknessIni'] != "None":
                     self.iceThickness = vos.readPCRmapClone(iniItems.routingOptions['iceThicknessIni'],
                                                             self.cloneMap, self.tmpDir, self.inputDir)
                 else:
                     self.iceThickness = pcr.scalar(0.0)
+
+                if self.soilTempMethod == 'smoothT':
+                    # Default value for smoothed soil temperature is 5 degreesC
+                    if iniItems.routingOptions['soilTemperatureIni'] != "None":
+                        self.soilTemperatureKelvin = vos.readPCRmapClone(iniItems.routingOptions['soilTemperatureIni'],
+                                                                         self.cloneMap, self.tmpDir, self.inputDir) + \
+                                                     pcr.scalar(273.15)
+                    else:
+                        self.soilTemperatureKelvin = pcr.scalar(5.0 + 273.15)
+
         else:
             # read initial conditions from the memory
             self.timestepsToAvgDischarge = iniConditions['routing']['timestepsToAvgDischarge']
@@ -434,6 +453,8 @@ class Routing(object):
             if self.waterTemperature:
                 self.waterTemp = iniConditions['routing']['waterTemperature']
                 self.iceThickness = iniConditions['routing']['iceThickness']
+                if self.soilTempMethod == 'smoothT':
+                    self.soilTemperatureKelvin = iniConditions['routing']['soilTemperature']
 
         self.channelStorage        = pcr.ifthen(self.landmask, pcr.cover(self.channelStorage, 0.0))
         self.readAvlChannelStorage = pcr.ifthen(self.landmask, pcr.cover(self.readAvlChannelStorage, 0.0))
@@ -453,6 +474,8 @@ class Routing(object):
             self.channelStorageTimeBefore = self.channelStorage
             self.totEW = self.channelStorage * self.waterTemp*self.specificHeatWater * self.densityWater
             self.temp_water_height = self.eta * pow(self.avgDischarge, self.nu)
+            if self.soilTempMethod == 'smoothT':
+                self.soilTemperatureKelvin = pcr.ifthen(self.landmask, pcr.cover(self.soilTemperatureKelvin, 0.0))
         # make sure that timestepsToAvgDischarge is consistent (or the same) for the entire map:
         try:
             self.timestepsToAvgDischarge = pcr.mapmaximum(self.timestepsToAvgDischarge)
@@ -2002,12 +2025,13 @@ class Routing(object):
             LatitudeLongitude=True)
 
         # Annual temperature - daily running average (deg-C)
-        self.annualT = vos.netcdf2PCRobjClone(
-            self.annualTNC, "tas",
-            str(currTimeStep.fulldate),
-            useDoy=None,
-            cloneMapFileName=self.cloneMap,
-            LatitudeLongitude=True) + pcr.scalar(273.15)
+        if self.soilTempMethod == 'annualT':
+            self.annualT = vos.netcdf2PCRobjClone(
+                self.annualTFileNC, "tas",
+                str(currTimeStep.fulldate),
+                useDoy=None,
+                cloneMapFileName=self.cloneMap,
+                LatitudeLongitude=True) + pcr.scalar(273.15)
 
     def energyLocal(self, meteo, landSurface, groundwater, timeSec=vos.secondsPerDay()):
         # Surface water energy fluxes [W/m2] within the current time step
@@ -2492,13 +2516,22 @@ class Routing(object):
         # TODO: change minimum FracWat to same as min_fracwat_for_water_height
         self.dynamicFracWat = pcr.max(self.dynamicFracWat, 0.001)
 
+        # Update soil temperature; uses air temperature as a proxy with two smoothing options:
+        # option 1: uses a running mean of annual air temperature (supplied as a separate forcing)
+        # option 2: uses a smoothing function of daily air temperature Tsoil(t) = (1-k)*Tsoil(t-1) + k*tas(t)
+        if self.soilTempMethod == 'annualT':
+            self.soilTemperatureKelvin = self.annualT
+        if self.soilTempMethod == 'smoothT':
+            self.soilTemperatureKelvin = (1 - self.kappa) * self.soilTemperatureKelvin \
+                                  + self.kappa * self.temperatureKelvin
+
         landT = pcr.cover(self.directRunoff_rain/landRunoff *
                           pcr.max(self.iceThresTemp+0.1, self.temperatureKelvin-self.deltaTPrec) +
                           self.directRunoff_melt/landRunoff * (self.iceThresTemp+self.deltaTMelt) +
                           self.interflowTotal/landRunoff *
                           pcr.max(self.iceThresTemp+0.1, self.temperatureKelvin) +
                           self.baseflow/landRunoff *
-                          pcr.max(self.iceThresTemp+5.0, self.annualT), self.temperatureKelvin)
+                          pcr.max(self.iceThresTemp+1.0, self.soilTemperatureKelvin), self.temperatureKelvin)
 
         iceHeatTransfer = self.heatTransferIce * (self.temperatureKelvin - self.iceThresTemp)
         waterHeatTransfer = self.heatTransferIce * (self.iceThresTemp - self.waterTemp)
