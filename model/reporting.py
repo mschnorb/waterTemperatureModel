@@ -337,6 +337,10 @@ class Reporting(object):
         if "waterTemp" in self.variables_for_report:
             self.waterTemp = self._model.routing.waterTemp
 
+        # water velocity (m/s)
+        if "waterVelocity" in self.variables_for_report:
+            self.waterVelocity = self._model.routing.waterVelocity
+
         # ice thickness (K)
         if "iceThickness" in self.variables_for_report:
             self.iceThickness = self._model.routing.iceThickness
@@ -395,8 +399,11 @@ class Reporting(object):
             self.alpha = self._model.routing.alpha
 
         # Energy balance terms
-        if "waterHeatTransfer" in self.variables_for_report:
-            self.waterHeatTransfer = self._model.routing.waterHeatTransfer
+        #if "waterHeatTransfer" in self.variables_for_report:
+        #    self.waterHeatTransfer = self._model.routing.waterHeatTransfer
+
+        if "surfaceHeatTransfer" in self.variables_for_report:
+            self.surfaceHeatTransfer = self._model.routing.surfaceHeatTransfer
 
         if "iceHeatTransfer" in self.variables_for_report:
             self.iceHeatTransfer = self._model.routing.iceHeatTransfer
@@ -406,6 +413,9 @@ class Reporting(object):
 
         if "latentHeatTransfer" in self.variables_for_report:
             self.latentHeatTransfer = self._model.routing.latentHeatTransfer
+
+        if "sensibleHeatTransfer" in self.variables_for_report:
+            self.sensibleHeatTransfer = self._model.routing.sensibleHeatTransfer
 
         if "advectedEnergyInflow" in self.variables_for_report:
             self.advectedEnergyInflow = self._model.routing.advectedEnergyInflow
@@ -421,6 +431,9 @@ class Reporting(object):
 
         if "totEW" in self.variables_for_report:
             self.totEW = self._model.routing.totEW
+
+        if "surfaceTemp" in self.variables_for_report:
+            self.surfaceTemp = self._model.routing.surfaceTemp
 
         # Water quality
         if "O2" in self.variables_for_report:
