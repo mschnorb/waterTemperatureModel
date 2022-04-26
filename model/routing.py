@@ -205,7 +205,7 @@ class Routing(object):
         self.max_water_height = 500000000
 
         # assumption for minimum crop coefficient for surface water bodies 
-        self.minCropWaterKC = 0.00
+        self.minCropWaterKC = 0.0
         if 'minCropWaterKC' in iniItems.routingOptions.keys():
             self.minCropWaterKC = float(iniItems.routingOptions['minCropWaterKC'])
 
@@ -301,56 +301,21 @@ class Routing(object):
         if self.method == "accuTravelTime":
             self.waterTemperature = False
 
-        self.deltaIceThickness = 0.0
+        #self.deltaIceThickness = 0.0
 
         if self.waterTemperature:
             # constants for the energy balance
-            # nominal measurement height for wind speed and temperature [m]
-            # roughness length for water [m]
-            # roughness length for ice [m]
-            # gravitational acceleration (m/s2)
-            # threshold temperature for ice melt (degC)
-            # density of ice [kg/m3]
-            # density of water [kg/m3]
-            # density of air [kg/m3]
-            # latent heat of vaporization [J/kg]
-            # latent heat of fusion [J/kg]
-            # specific heat of water [J/kg/K]
-            # specific heat of air [J/kg/K]
-            # thermal conductivity of ice [W/m/K]
-            # heat transfer constant for ice [W*s0.8/m2.6/degC]
-            # albedo of water [-]
-            # albedo of snow and ice [-]
-            # ice cover condition [boolean]
-            # bulk extinction coefficient for ice [-]
-            # fraction of solar radiation that penetrates ice-water interface
-            self.zm = pcr.scalar(2.0)                   # TODO: read from initialization file
-            self.z0w = pcr.scalar(0.01)                 # TODO: read from initialization file
-            self.z0i = pcr.scalar(0.005)                # TODO: read from initialization file
-            self.grav = pcr.scalar(9.80665)
-            self.iceThresTemp = pcr.scalar(273.15)      # TODO: read from initialization file
-            self.densityIce = 920.0
-            self.densityWater = 1000.0
-            self.densityAir = 1.292
-            self.latentHeatVapor = pcr.scalar(2.5e6)
-            self.latentHeatFusion = pcr.scalar(3.34e5)
-            self.specificHeatWater = pcr.scalar(4190.0)
-            self.specificHeatAir = pcr.scalar(1003.0)
-            self.thermCondIce = pcr.scalar(2.22)       # TODO: input as state
-            self.heatTransferIceConstant = pcr.scalar(1622.0)  # TODO: read from initialization file
-            self.albedoWater = pcr.scalar(0.15)        # TODO: read from initialization file
-            self.albedoSnow = pcr.scalar(0.50)         # TODO: read from initialization file
-            self.noIce = pcr.boolean(1)                # TODO: input as state
-            self.Ti = pcr.scalar(0.07)                 # TODO: read from initialization file
-            self.Bi = pcr.scalar(1.0)                  # TODO: read from initialization file
-            # reduction in the temperature for falling rain
-            self.deltaTPrec = pcr.scalar(1.5)          # TODO: read from initialization file
-            # increase in the temperature for melting snow and ice
-            self.deltaTMelt = pcr.scalar(1.5)          # TODO: read from initialization file
-            # scaling factor for wind speed
-            self.scaleFactorWind = 2.0                 # TODO: read from initialization file
-            # stefan-boltzman constant [W/m2/K]
-            self.stefanBoltzman = 5.67e-8
+            self.grav = pcr.scalar(9.80665)              # gravitational acceleration (m/s2)
+            self.densityIce = 920.0                      # density of ice [kg/m3]
+            self.densityWater = 1000.0                   # density of water [kg/m3]
+            self.densityAir = 1.292                      # density of air [kg/m3]
+            self.latentHeatVapor = pcr.scalar(2.5e6)     # latent heat of vaporization [J/kg]
+            self.latentHeatFusion = pcr.scalar(3.34e5)   # latent heat of fusion [J/kg]
+            self.specificHeatWater = pcr.scalar(4190.0)  # specific heat of water [J/kg/K]
+            self.specificHeatAir = pcr.scalar(1003.0)    # specific heat of air [J/kg/K]
+            self.thermCondIce = pcr.scalar(2.22)         # thermal conductivity of ice [W/m/K] TODO: input as state
+            self.stefanBoltzman = 5.67e-8                # Stefan-Boltzman constant [W/m2/K]
+
             # Path to daily meteorology files
             self.radShortFileNC = iniItems.meteoOptions['radiationShortNC']
             self.vapFileNC = iniItems.meteoOptions['vaporNC']
@@ -368,9 +333,50 @@ class Routing(object):
                 self.windSpeedVarName = iniItems.meteoOptions['windSpeedVarName']
             except:
                 self.windSpeedVarName = "ws"
+
+            # Parameters for the energy balance (read from initialization file)
+            # Measurement height for air temperature and wind speed [m]
+            self.zm = vos.readPCRmapClone(iniItems.routingOptions['zm'],
+                                           self.cloneMap, self.tmpDir, self.inputDir)
+            # Water roughness height [m]
+            self.z0w = vos.readPCRmapClone(iniItems.routingOptions['z0w'],
+                                          self.cloneMap, self.tmpDir, self.inputDir)
+            # Ice roughness height [m]
+            self.z0i = vos.readPCRmapClone(iniItems.routingOptions['z0i'],
+                                          self.cloneMap, self.tmpDir, self.inputDir)
+            # Bulk extinction coefficient of solar radiation through ice [-]
+            self.Ti = vos.readPCRmapClone(iniItems.routingOptions['Ti'],
+                                           self.cloneMap, self.tmpDir, self.inputDir)
+            # Fraction of absorbed radiation that penetrates ice-water interface [-]
+            self.Bi = vos.readPCRmapClone(iniItems.routingOptions['Bi'],
+                                           self.cloneMap, self.tmpDir, self.inputDir)
+            # Ice threshold temperature [K]
+            self.iceThresTemp = vos.readPCRmapClone(iniItems.routingOptions['iceThresTemp'],
+                                                    self.cloneMap, self.tmpDir, self.inputDir)
+            # Albedo of water [fraction]
+            self.albedoWater = vos.readPCRmapClone(iniItems.routingOptions['albedoWater'],
+                                                   self.cloneMap, self.tmpDir, self.inputDir)
+            # Albedo of ice [fraction]
+            self.albedoIce = vos.readPCRmapClone(iniItems.routingOptions['albedoIce'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+            # Reduction in the temperature of falling rain [K]
+            self.deltaTPrec = vos.readPCRmapClone(iniItems.routingOptions['deltaTPrec'],
+                                                  self.cloneMap, self.tmpDir, self.inputDir)
+            # Increase in the temperature of melting snow and ice [K]
+            self.deltaTMelt = vos.readPCRmapClone(iniItems.routingOptions['deltaTMelt'],
+                                                  self.cloneMap, self.tmpDir, self.inputDir)
+            # Scale factor for wind speed [-]
+            self.scaleFactorWind = vos.readPCRmapClone(iniItems.routingOptions['scaleFactorWind'],
+                                                       self.cloneMap, self.tmpDir, self.inputDir)
+            # Heat transfer constant for ice [W*s^(0.8)/m^(2.6)/degC]
+            self.heatTransferIceConstant = vos.readPCRmapClone(iniItems.routingOptions['heatTransferIceConstant'],
+                                                               self.cloneMap, self.tmpDir, self.inputDir)
+
             # Ice cover parameters
-            self.maxIceThickness = 3.0
-            self.deltaIceThickness = 0.0
+            self.noIce = pcr.boolean(1)   # TODO: input as state
+            self.maxIceThickness = 3.0    # TODO: input from initialization file
+            self.deltaIceThickness = 0.0  # TODO: input as state
+
             # Method and data for estimating soil temperature
             self.soilTempMethod = iniItems.meteoOptions['soilTemperatureMethod']
             if self.soilTempMethod == 'annualT':
@@ -2625,7 +2631,7 @@ class Routing(object):
         # https://www.engineeringtoolbox.com/ice-thermal-properties-d_576.html.
         self.thermCondIce = ifthenelse(self.noIce, 2.22, 7.8038 * pcr.exp(-0.005 * self.surfaceTemp))
         surfaceRough = pcr.ifthenelse(self.noIce, self.z0w, self.z0i)
-        surfaceAlbedo = pcr.ifthenelse(self.noIce, self.albedoWater, self.albedoSnow)
+        surfaceAlbedo = pcr.ifthenelse(self.noIce, self.albedoWater, self.albedoIce)
 
         # Transfer of energy due to net radiation, Qrn
         radiativeHeatTransfer = (1 - surfaceAlbedo) * self.radiationShort
