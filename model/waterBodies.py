@@ -46,6 +46,7 @@ class WaterBodies(object):
         else:
             self.useNetCDF = True
             self.ncFileInp = vos.getFullPath(iniItems.routingOptions['waterBodyInputNC'], self.inputDir)
+            self.waterBodyShF = iniItems.routingOptions['waterBodyShF']
 
         # Parameters for weir formula
         self.minWeirWidth = minChannelWidth  # minimum width (m) used in the weir formula
@@ -57,8 +58,7 @@ class WaterBodies(object):
         self.minResvrFrac = 0.10
         self.maxResvrFrac = 0.75
 
-    def getParameterFiles(self, currTimeStep, cellArea, ldd,
-                          cellLengthFD, cellSizeInArcDeg,
+    def getParameterFiles(self, currTimeStep, cellArea, lddMap,
                           initial_condition_dictionary=None):
 
         # parameters for Water Bodies: fracWat              
@@ -70,7 +70,7 @@ class WaterBodies(object):
 
         # cell surface area (m2) and ldd
         self.cellArea = cellArea
-        ldd = pcr.ifthen(self.landmask, ldd)
+        lddMap = pcr.ifthen(self.landmask, lddMap)
 
         # date used for accessing/extracting water body information
         date_used = currTimeStep.fulldate
@@ -101,7 +101,7 @@ class WaterBodies(object):
         self.waterBodyIds = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0., pcr.nominal(self.waterBodyIds))
 
         # water body outlets (correcting outlet positions)
-        wbCatchment = pcr.catchmenttotal(pcr.scalar(1), ldd)
+        wbCatchment = pcr.catchmenttotal(pcr.scalar(1), lddMap)
         self.waterBodyOut = pcr.ifthen(wbCatchment == pcr.areamaximum(wbCatchment, self.waterBodyIds),
                                        self.waterBodyIds)     # = outlet ids
         self.waterBodyOut = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0., self.waterBodyOut)
@@ -114,11 +114,8 @@ class WaterBodies(object):
         # TODO: Please also consider endorheic lakes!
         # correction for multiple outlet reservoirs
         # self.waterBodyIds = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0.,
-        #                    pcr.subcatchment(ldd,\
-        #                    pcr.nominal(pcr.uniqueid(pcr.boolean(self.waterBodyOut)))))
-        #self.waterBodyIds = pcr.ifthen(\
-        #                    pcr.scalar(self.waterBodyIds) > 0.,\
-        #                    pcr.subcatchment(ldd,self.waterBodyOut))
+        #                    pcr.subcatchment(lddMap, pcr.nominal(pcr.uniqueid(pcr.boolean(self.waterBodyOut)))))
+        #self.waterBodyIds = pcr.ifthen(pcr.scalar(self.waterBodyIds) > 0., pcr.subcatchment(lddMap,self.waterBodyOut))
 
         # boolean map for water body outlets:
         self.waterBodyOut = pcr.ifthen(pcr.scalar(self.waterBodyOut) > 0., pcr.boolean(1))
@@ -186,9 +183,11 @@ class WaterBodies(object):
 
         # water body shape factor
         if self.useNetCDF:
-            self.waterBodyShapeFactor = vos.netcdf2PCRobjClone(self.ncFileInp, 'waterBodyShF',
-                                                               date_used, useDoy='yearly',
-                                                               cloneMapFileName=self.cloneMap)
+            self.waterBodyShapeFactor = vos.readPCRmapClone(self.waterBodyShF, self.cloneMap,
+                                                            self.tmpDir, self.inputDir)
+            #self.waterBodyShapeFactor = vos.netcdf2PCRobjClone(self.ncFileInp, 'waterBodyShF',
+            #                                                   date_used, useDoy='yearly',
+            #                                                   cloneMapFileName=self.cloneMap)
         else:
             self.waterBodyShapeFactor = vos.readPCRmapClone(self.waterBodyShF+str(year_used)+".map",
                                                             self.cloneMap, self.tmpDir, self.inputDir,
