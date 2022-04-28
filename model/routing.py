@@ -314,6 +314,7 @@ class Routing(object):
             self.specificHeatWater = pcr.scalar(4190.0)  # specific heat of water [J/kg/K]
             self.specificHeatAir = pcr.scalar(1003.0)    # specific heat of air [J/kg/K]
             self.thermCondIce = pcr.scalar(2.22)         # thermal conductivity of ice [W/m/K] TODO: input as state
+            self.molCondHeatWater = pcr.scalar(0.6)      # molecular conductivty of heat for water [W/m/K]
             self.stefanBoltzman = 5.67e-8                # Stefan-Boltzman constant [W/m2/K]
 
             # Path to daily meteorology files
@@ -806,19 +807,12 @@ class Routing(object):
         #
         if currTimeStep.timeStepPCR == 1:
             initial_conditions_for_water_bodies = self.getState()
-            self.WaterBodies.getParameterFiles(currTimeStep,\
-                                               self.cellArea,\
-                                               self.lddMap,\
-                                               self.cellLengthFD,\
-                                               self.cellSizeInArcDeg,\
-                                               initial_conditions_for_water_bodies)               # the last line is for the initial conditions of lakes/reservoirs
+            self.WaterBodies.getParameterFiles(currTimeStep, self.cellArea, self.lddMap,
+                                               initial_conditions_for_water_bodies)
+            # the last line is for the initial conditions of lakes/reservoirs
 
         if (currTimeStep.doy == 1) and (currTimeStep.timeStepPCR > 1):
-            self.WaterBodies.getParameterFiles(currTimeStep,\
-                                               self.cellArea,\
-                                               self.lddMap,\
-                                               self.cellLengthFD,\
-                                               self.cellSizeInArcDeg)
+            self.WaterBodies.getParameterFiles(currTimeStep, self.cellArea, self.lddMap)
         #
         #self.WaterBodies.waterBodyIds = pcr.ifthen(self.landmask, pcr.nominal(-1)) #TODO
         # downstreamDemand (m3/s) for reservoirs 
@@ -2321,17 +2315,13 @@ class Routing(object):
             self.WaterBodies.getParameterFiles(currTimeStep,
                                                self.cellArea,
                                                self.lddMap,
-                                               self.cellLengthFD,
-                                               self.cellSizeInArcDeg,
                                                initial_conditions_for_water_bodies)
             # the last line is for the initial conditions of lakes/reservoirs
 
         if (currTimeStep.doy == 1) and (currTimeStep.timeStepPCR > 1):
             self.WaterBodies.getParameterFiles(currTimeStep,
                                                self.cellArea,
-                                               self.lddMap,
-                                               self.cellLengthFD,
-                                               self.cellSizeInArcDeg)
+                                               self.lddMap)
         #
         #self.WaterBodies.waterBodyIds = pcr.ifthen(self.landmask, pcr.nominal(-1)) #TODO
         # downstreamDemand (m3/s) for reservoirs 
@@ -2626,10 +2616,16 @@ class Routing(object):
         self.surfaceTemp = pcr.ifthenelse(self.noIce, self.waterTemp,
                                           pcr.min(self.iceThickness/self.thermCondIce *
                                           self.surfaceHeatTransfer + 273.15, self.iceThresTemp))
+        # Set constraint such that surface temperature, if negative, is never less than air temperature (if also
+        # negative) or the ice threshold temperature (if air temperature is positive), i.e. where ice,
+        # airTemp <= surfTemp <= 0 degC
+        self.surfaceTemp = pcr.ifthenelse(self.surfaceTemp < self.iceThresTemp,
+                                          pcr.min(pcr.max(self.surfaceTemp, self.temperatureKelvin),
+                                                  self.iceThresTemp), self.surfaceTemp)
         # Update surface properties: thermal conductivity of ice, surface roughness, and surface albedo.
         # Thermal conductivity relation with temperature [K] constructed by fitting data from
         # https://www.engineeringtoolbox.com/ice-thermal-properties-d_576.html.
-        self.thermCondIce = ifthenelse(self.noIce, 2.22, 7.8038 * pcr.exp(-0.005 * self.surfaceTemp))
+        self.thermCondIce = ifthenelse(self.noIce, 2.22, 7.831194 * pcr.exp(-0.00466 * self.surfaceTemp))
         surfaceRough = pcr.ifthenelse(self.noIce, self.z0w, self.z0i)
         surfaceAlbedo = pcr.ifthenelse(self.noIce, self.albedoWater, self.albedoIce)
 
@@ -2680,9 +2676,13 @@ class Routing(object):
             self.surfaceTemp == self.iceThresTemp,
             -surfaceHeatTransfer / self.densityIce / self.latentHeatFusion * timeSec, 0.0))
         deltaIceThickness_surface = pcr.min(deltaIceThickness_surface, 0.0)  # melt only at surface
-        # Heat transfer to bottom of ice, where Qw = hi*(Tw-Tm); Eqns. 19 & 20 from Shen and Chiang (1984)
-        iceHeatTransfer = self.heatTransferIceConstant * (self.waterVelocity**0.8 / loc_water_height**0.2) *\
-                          (self.waterTemp - self.iceThresTemp)
+        # Heat transfer to bottom of ice, where Qw = hi*(Tw-Tm) for turbulent flow (i.e. rivers; Eqns. 19 & 20 from
+        # Shen and Chiang, 1984) or Qw = kw(dT/dz) for laminar flow (i.e. lakes; Lepparanta, 2010)
+        iceHeatTransfer = pcr.ifthenelse(
+            isLake,
+            self.molCondHeatWater * (self.waterTemp - self.iceThresTemp) / loc_water_height,
+            self.heatTransferIceConstant * (self.waterVelocity**0.8 / loc_water_height**0.2) *
+            (self.waterTemp - self.iceThresTemp))
         # Ice thickness change at bottom of ice (growth or melt possible); Eqn. 32 from Shen and Chiang (1984)
         deltaIceThickness_bottom = pcr.ifthenelse(self.noIce, 0.0,
                                                   timeSec / (self.densityIce * self.latentHeatFusion) *
@@ -2735,7 +2735,7 @@ class Routing(object):
         dtotEWLoc = pcr.max(dtotEWLoc,
                             pcr.min(0,
                                     (totEWC+dtotEWC) * pcr.max(self.temperatureKelvin,
-                                                               self.iceThresTemp+.1)-(self.totEW+dtotEWAdv)))
+                                                               self.iceThresTemp+0.1)-(self.totEW+dtotEWAdv)))
         self.totEW = pcr.max(0, self.totEW + dtotEWLoc + dtotEWAdv)
 
         self.temp_water_height = pcr.max(1e-16, totStorLoc + dtotStorLoc)
