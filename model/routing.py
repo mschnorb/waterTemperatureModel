@@ -2212,23 +2212,22 @@ class Routing(object):
                               pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds))),
             self.totEW * self.dynamicFracWat * self.cellArea)
 
-        self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., energyTotal*lakeTransFrac),
-                              energyTotal)
-        self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut, (1-lakeTransFrac) * energyTotal), 0.0)
-        # energyTotalRoutable = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-        # pcr.areatotal(pcr.ifthen(self.landmask,self.totEW * self.routableEnergyFraction * self.dynamicFracWat * self.cellArea),\
-        # pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))), self.totEW * self.routableEnergyFraction * self.dynamicFracWat * self.cellArea)
+        # Routed energy from entire water column
+        #self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., energyTotal*lakeTransFrac),
+        #                      energyTotal)
+
+        # Routed energy from epilimnion only (i.e. active storage)
         self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-                                     energyTotal * self.routableEnergyFraction * lakeTransFrac),
+                                     self.activeEnergy * lakeTransFrac *
+                                     self.waterBodyStorageTimeBefore / self.activeStorage),
                               energyTotal)
 
+        # Routed energy using routableEnergyFraction (???)
+        #self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+        #                             energyTotal * self.routableEnergyFraction * lakeTransFrac),
+        #                      energyTotal)
+
         self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut, energyTotal - self.volumeEW), 0.0)
-        #self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut,  energyTotal * (1 - self.routableEnergyFraction * lakeTransFrac)), 0.0)
-        #self.test5 = ifthen(self.WaterBodies.waterBodyOut, (self.volumeEW + self.remainingVolumeEW) - energyTotal)
-        #self.test6 = self.volumeEW
-        #self.test7 = ifthen(self.WaterBodies.waterBodyOut, self.remainingVolumeEW)
-        #self.test8 = ifthen(self.WaterBodies.waterBodyOut,lakeTransFrac * self.routableEnergyFraction)
-        #self.test9 = ifthen(self.WaterBodies.waterBodyOut, energyTotal)
 
     def energyWaterBodyAverage(self):
         self.totalVolumeEW = self.volumeEW + self.remainingVolumeEW
@@ -2244,7 +2243,7 @@ class Routing(object):
             pcr.areatotal(pcr.cover(self.cellArea, 0.0),
                           pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds)), energyTotal)
 
-        self.totEW = cover(energyAverageLakeCell /(self.dynamicFracWat * self.cellArea), 1e-16)
+        self.totEW = cover(energyAverageLakeCell / (self.dynamicFracWat * self.cellArea), 1e-16)
 
         self.temp_water_height = self.return_water_body_storage_to_channel(
             self.channelStorageNow)/(self.dynamicFracWat * self.cellArea)
@@ -2770,23 +2769,20 @@ class Routing(object):
         self.WaterBodies.getThermoClineDepth()
         self.WaterBodies.getThermoClineStorage()
         energyTotal = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-         pcr.areatotal(pcr.ifthen(self.landmask,self.totEW * self.dynamicFracWat * self.cellArea),
-                       pcr.ifthen(self.landmask,self.WaterBodies.waterBodyIds))),
+         pcr.areatotal(pcr.ifthen(self.landmask, self.totEW * self.dynamicFracWat * self.cellArea),
+                       pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds))),
                             self.totEW * self.dynamicFracWat * self.cellArea)
         self.hypolimnionEnergy = pcr.cover(self.WaterBodies.hypolimnionStorage * hypolimnionTemperature *
                                            self.specificHeatWater * self.densityWater, 0.0)
-        activeEnergy = pcr.cover(energyTotal-self.hypolimnionEnergy, energyTotal)
-        activeStorage = pcr.ifthenelse(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-                                       self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage,
-                                       self.waterBodyStorageTimeBefore)
-        self.routableEnergyFraction = pcr.cover((energyTotal-self.hypolimnionEnergy)/
-                                                energyTotal*(self.waterBodyStorageTimeBefore/
-                                                             (self.waterBodyStorageTimeBefore-
-                                                              self.WaterBodies.hypolimnionStorage)), 1.0)
-        self.hypolimnionFraction = self.WaterBodies.hypolimnionStorage/self.waterBodyStorageTimeBefore
-        self.test1 = self.hypolimnionFraction
-        self.surfaceWaterTemperature = (energyTotal*self.routableEnergyFraction)/(self.waterBodyStorageTimeBefore)/\
-                                       (self.specificHeatWater*self.densityWater)
-        self.test2 = self.routableEnergyFraction
-        self.test3 = self.surfaceWaterTemperature
-        self.test4 = energyTotal
+        self.activeEnergy = pcr.cover(energyTotal-self.hypolimnionEnergy, energyTotal)
+        self.activeStorage = pcr.ifthenelse(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                                            self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage,
+                                            self.waterBodyStorageTimeBefore)
+        # MAS: Unsure what routableEnergyFraction is supposed to represent
+        self.routableEnergyFraction = pcr.cover(
+            (energyTotal-self.hypolimnionEnergy) /
+            energyTotal * (self.waterBodyStorageTimeBefore /
+                         (self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage)),1.0)
+        #self.hypolimnionFraction = self.WaterBodies.hypolimnionStorage / self.waterBodyStorageTimeBefore
+        #self.surfaceWaterTemperature = (energyTotal*self.routableEnergyFraction) / self.waterBodyStorageTimeBefore /\
+        #                               (self.specificHeatWater*self.densityWater)

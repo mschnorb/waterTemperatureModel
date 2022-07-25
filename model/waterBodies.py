@@ -58,6 +58,13 @@ class WaterBodies(object):
         self.minResvrFrac = 0.10
         self.maxResvrFrac = 0.75
 
+        # Water body fetch parameters
+        if iniItems.routingOptions['waterTemperature'] == "True":
+            self.fetchCoef = vos.readPCRmapClone(iniItems.routingOptions['fetchCoef'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+            self.fetchExp = vos.readPCRmapClone(iniItems.routingOptions['fetchExp'],
+                                                self.cloneMap, self.tmpDir, self.inputDir)
+
     def getParameterFiles(self, currTimeStep, cellArea, lddMap,
                           initial_condition_dictionary=None):
 
@@ -531,8 +538,10 @@ class WaterBodies(object):
                                                                  reservoirMaxDepth)))
 
     def getThermoClineDepth(self):
-        self.mixingDepth = pcr.min(pcr.max(self.dynamicArea**0.1, pcr.scalar(1.0)), self.maxWaterDepth)
-        self.mixingDepth = pcr.min(pcr.scalar(3), self.maxWaterDepth)
+        fetch = (self.dynamicArea/1000.0/1000.0)**0.5  # Lake area in km2; fetch in km
+        #self.mixingDepth = pcr.min(pcr.max(self.dynamicArea**0.1, pcr.scalar(1.0)), self.maxWaterDepth)
+        self.mixingDepth = pcr.min(pcr.max(self.fetchCoef*(fetch**self.fetchExp), pcr.scalar(1.0)), self.maxWaterDepth)
+        #self.mixingDepth = pcr.min(pcr.scalar(3), self.maxWaterDepth)
 
     def getThermoClineStorage(self):
         self.hypolimnionStorage = pcr.min(

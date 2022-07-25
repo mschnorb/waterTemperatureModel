@@ -353,7 +353,7 @@ class Reporting(object):
 
         # accumulated baseflow (m3) along the drainage network
         if "accuBaseflow" in self.variables_for_report:
-            self.accuBaseflow = pcr.catchmenttotal(self.baseflow * self._model.routing.cellArea,
+            self.accuBaseflow = pcr.catchmenttotal(self._model.baseflow * self._model.routing.cellArea,
                                                    self._model.routing.lddMap)
 
         # local changes in water bodies (i.e. abstraction, return flow, evaporation, bed exchange), excluding runoff
@@ -401,6 +401,9 @@ class Reporting(object):
         # Energy balance terms
         #if "waterHeatTransfer" in self.variables_for_report:
         #    self.waterHeatTransfer = self._model.routing.waterHeatTransfer
+
+        if "soilTemp" in self.variables_for_report:
+            self.soilTemp = self._model.routing.soilTemperatureKelvin
 
         if "surfaceHeatTransfer" in self.variables_for_report:
             self.surfaceHeatTransfer = self._model.routing.surfaceHeatTransfer
