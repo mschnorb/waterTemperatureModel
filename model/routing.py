@@ -315,7 +315,7 @@ class Routing(object):
             self.specificHeatAir = pcr.scalar(1003.0)    # specific heat of air [J/kg/K]
             self.thermCondIce = pcr.scalar(2.22)         # thermal conductivity of ice [W/m/K] TODO: input as state
             self.molCondHeatWater = pcr.scalar(0.6)      # molecular conductivty of heat for water [W/m/K]
-            self.stefanBoltzman = 5.67e-8                # Stefan-Boltzman constant [W/m2/K]
+            self.stefanBoltzman = 5.67e-8                # Stefan-Boltzman constant [W/m2/K-4]
 
             # Path to daily meteorology files
             self.radShortFileNC = iniItems.meteoOptions['radiationShortNC']
@@ -2222,11 +2222,6 @@ class Routing(object):
                                      self.waterBodyStorageTimeBefore / self.activeStorage),
                               energyTotal)
 
-        # Routed energy using routableEnergyFraction (???)
-        #self.volumeEW = cover(ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
-        #                             energyTotal * self.routableEnergyFraction * lakeTransFrac),
-        #                      energyTotal)
-
         self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut, energyTotal - self.volumeEW), 0.0)
 
     def energyWaterBodyAverage(self):
@@ -2700,11 +2695,7 @@ class Routing(object):
         deltaIceThickness_melt = pcr.max(0, -self.deltaIceThickness)
         verticalGain = watQ + landRunoff/self.dynamicFracWat + deltaIceThickness_melt
 
-        #self.waterBodies.waterBodyStorage = pcr.max(0.0, self.waterBodies.waterBodyStorage - lakedStor)
-        #self.channelStorage = pcr.max(0.0, self.channelStorage - channeldStor)
-
         # net cumulative input for mass balance check [m3]
-        #self.dtotStor = channeldStor
         # change in water storage due to vertical change only used to limit heating and cooling of surface water
         dtotStorLoc = verticalGain
         totStorLoc = self.return_water_body_storage_to_channel(self.channelStorageTimeBefore) / \
@@ -2720,21 +2711,9 @@ class Routing(object):
                                               self.specificHeatWater * self.densityWater/timeSec)
 
         # Change in energy storage and resulting temperature
-        totEWC = totStorLoc * self.specificHeatWater * self.densityWater
-        dtotEWC = dtotStorLoc * self.specificHeatWater * self.densityWater
         dtotEWLoc = pcr.ifthenelse(self.noIce, surfaceHeatTransfer,
                                    extinctCoef * radiativeHeatTransfer - iceHeatTransfer) * timeSec
         dtotEWAdv = (advectedEnergyInflow + advectedEnergyPrecip) * timeSec
-        dtotEWLoc = pcr.min(
-            dtotEWLoc, pcr.max(
-                0, totEWC * self.temperatureKelvin-self.totEW) +
-                       pcr.ifthenelse(dtotStorLoc > 0,
-                                      pcr.max(0, dtotEWC * self.temperatureKelvin-dtotEWAdv), 0))
-        dtotEWLoc = pcr.ifthenelse(self.waterTemp > self.temperatureKelvin, pcr.min(0, dtotEWLoc), dtotEWLoc)
-        dtotEWLoc = pcr.max(dtotEWLoc,
-                            pcr.min(0,
-                                    (totEWC+dtotEWC) * pcr.max(self.temperatureKelvin,
-                                                               self.iceThresTemp+0.1)-(self.totEW+dtotEWAdv)))
         self.totEW = pcr.max(0, self.totEW + dtotEWLoc + dtotEWAdv)
 
         self.temp_water_height = pcr.max(1e-16, totStorLoc + dtotStorLoc)
@@ -2778,11 +2757,3 @@ class Routing(object):
         self.activeStorage = pcr.ifthenelse(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                                             self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage,
                                             self.waterBodyStorageTimeBefore)
-        # MAS: Unsure what routableEnergyFraction is supposed to represent
-        self.routableEnergyFraction = pcr.cover(
-            (energyTotal-self.hypolimnionEnergy) /
-            energyTotal * (self.waterBodyStorageTimeBefore /
-                         (self.waterBodyStorageTimeBefore - self.WaterBodies.hypolimnionStorage)),1.0)
-        #self.hypolimnionFraction = self.WaterBodies.hypolimnionStorage / self.waterBodyStorageTimeBefore
-        #self.surfaceWaterTemperature = (energyTotal*self.routableEnergyFraction) / self.waterBodyStorageTimeBefore /\
-        #                               (self.specificHeatWater*self.densityWater)
