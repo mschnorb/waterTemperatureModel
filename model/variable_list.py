@@ -37,6 +37,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# Short-term average sir temperature
+pcrglobwb_variable_name = 'avgTemperatureShort'
+netcdf_short_name[pcrglobwb_variable_name] = 'air_temperature'
+netcdf_unit[pcrglobwb_variable_name]       = 'degrees Celsius'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'short-term average air temperature'
+description[pcrglobwb_variable_name]       = 'Running average of air temperature'
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
 # referencePotET
 pcrglobwb_variable_name = 'referencePotET'
 netcdf_short_name[pcrglobwb_variable_name] = 'reference_potential_evaporation'

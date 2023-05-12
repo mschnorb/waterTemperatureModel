@@ -438,6 +438,9 @@ class Reporting(object):
         if "surfaceTemp" in self.variables_for_report:
             self.surfaceTemp = self._model.routing.surfaceTemp
 
+        if "avgTempShort" in self.variables_for_report:
+            self.avgTempShort = self._model.routing.avgTemperatureShort
+
         # Water quality
         if "O2" in self.variables_for_report:
             self.O2 = self._model.routing.O2
