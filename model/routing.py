@@ -513,8 +513,8 @@ class Routing(object):
                 
                 if self.soilTempMethod == 'mohseni':
                     # Default value for short-term average air temperature is 2 degreesC
-                    if iniItems.routingOptions['avgTemperatureShort'] != "None":
-                        self.avgTemperatureShort = vos.readPCRmapClone(iniItems.routingOptions['avgTemperatureShort'],
+                    if iniItems.routingOptions['avgTemperatureShortIni'] != "None":
+                        self.avgTemperatureShort = vos.readPCRmapClone(iniItems.routingOptions['avgTemperatureShortIni'],
                                                                        self.cloneMap, self.tmpDir, self.inputDir)
                     else:
                         self.avgTemperatureShort = pcr.scalar(2.0)
