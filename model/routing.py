@@ -49,6 +49,9 @@ class Routing(object):
             result['surfaceHeatTransfer'] = self.surfaceHeatTransfer  # W/m2; net surface heat transfer
             if self.soilTempMethod == 'smoothT':
                 result['soilTemperature'] = self.soilTemperatureKelvin  # K; soil temperature
+            if self.soilTempMethod == 'mohseni':
+                result['timestepsToAvgTemperatureShort'] = self.timestepsToAvgTemperatureShort    # day
+                result['avgTemperatureShort'] = self.avgTemperatureShort  # degC; short-term average air temperature
 
         return result
 
@@ -363,9 +366,6 @@ class Routing(object):
             # Reduction in the temperature of falling rain [K]
             self.deltaTPrec = vos.readPCRmapClone(iniItems.routingOptions['deltaTPrec'],
                                                   self.cloneMap, self.tmpDir, self.inputDir)
-            # Increase in the temperature of melting snow and ice [K]
-            self.deltaTMelt = vos.readPCRmapClone(iniItems.routingOptions['deltaTMelt'],
-                                                  self.cloneMap, self.tmpDir, self.inputDir)
             # Scale factor for wind speed [-]
             self.scaleFactorWind = vos.readPCRmapClone(iniItems.routingOptions['scaleFactorWind'],
                                                        self.cloneMap, self.tmpDir, self.inputDir)
@@ -380,11 +380,34 @@ class Routing(object):
 
             # Method and data for estimating soil temperature
             self.soilTempMethod = iniItems.meteoOptions['soilTemperatureMethod']
-            if self.soilTempMethod == 'annualT':
-                self.annualTFileNC = iniItems.meteoOptions['annualAvgTNC']
-            if self.soilTempMethod == 'smoothT':
-                self.kappa = vos.readPCRmapClone(iniItems.meteoOptions['kappa'],
+            if self.soilTempMethod != 'mohseni':
+                # Increase in the temperature of melting snow and ice [K]; constant value
+                self.deltaTMelt = vos.readPCRmapClone(iniItems.routingOptions['deltaTMelt'],
+                                                      self.cloneMap, self.tmpDir, self.inputDir)
+                if self.soilTempMethod == 'annualT':
+                    self.annualTFileNC = iniItems.meteoOptions['annualAvgTNC']
+                if self.soilTempMethod == 'smoothT':
+                    self.kappa = vos.readPCRmapClone(iniItems.meteoOptions['kappa'],
+                                                     self.cloneMap, self.tmpDir, self.inputDir)
+            if self.soilTempMethod == 'mohseni':
+                # Increase in the temperature of melting snow and ice [K] updated dynamically; set dummy value for now
+                self.deltaTMelt = pcr.scalar(1.0)
+                # maximum number of days (timesteps) to calculate short term average air temperature
+                self.maxTimestepsToAvgTemperatureShort = vos.readPCRmapClone(iniItems.meteoOptions['avgPeriodTemp'],
+                                                                             self.cloneMap, self.tmpDir, self.inputDir)
+                # Regression parameters mew (min), alpha (max), beta (shift) and gamma (slope)
+                self.mmew = vos.readPCRmapClone(iniItems.meteoOptions['mohseniMin'],
                                                  self.cloneMap, self.tmpDir, self.inputDir)
+                self.malpha = vos.readPCRmapClone(iniItems.meteoOptions['mohseniMax'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+                self.mbeta = vos.readPCRmapClone(iniItems.meteoOptions['mohseniShift'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+                self.mgamma = vos.readPCRmapClone(iniItems.meteoOptions['mohseniSlope'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+                # Factor applied to baseflow temperature to represent temperature of melt runoff
+                self.mfact = vos.readPCRmapClone(iniItems.meteoOptions['meltTempScale'],
+                                                 self.cloneMap, self.tmpDir, self.inputDir)
+        
         try:
           self.routingOnly = iniItems.routingOptions['routingOnly'] == "True"
         except:
@@ -487,6 +510,21 @@ class Routing(object):
                                                                          self.cloneMap, self.tmpDir, self.inputDir)
                     else:
                         self.soilTemperatureKelvin = pcr.scalar(5.0 + 273.15)
+                
+                if self.soilTempMethod == 'mohseni':
+                    # Default value for short-term average air temperature is 2 degreesC
+                    if iniItems.routingOptions['avgTemperatureShort'] != "None":
+                        self.avgTemperatureShort = vos.readPCRmapClone(iniItems.routingOptions['avgTemperatureShort'],
+                                                                       self.cloneMap, self.tmpDir, self.inputDir)
+                    else:
+                        self.avgTemperatureShort = pcr.scalar(2.0)
+                    # Default timesteps for average discharge is maxTimestepsToAvgDischargeLong
+                    if iniItems.routingOptions['timestepsToAvgTemperatureShortIni'] != "None":
+                        self.timestepsToAvgTemperatureShort = vos.readPCRmapClone(
+                        iniItems.routingOptions['timestepsToAvgTemperatureShortIni'],
+                        self.cloneMap, self.tmpDir, self.inputDir)
+                    else:
+                        self.timestepsToAvgTemperatureShort = pcr.scalar(self.maxTimestepsToAvgTemperatureShort)
 
         else:
             # read initial conditions from the memory
@@ -506,6 +544,8 @@ class Routing(object):
                 self.surfaceHeatTransfer = iniConditions['routing']['surfaceHeatTransfer']
                 if self.soilTempMethod == 'smoothT':
                     self.soilTemperatureKelvin = iniConditions['routing']['soilTemperature']
+                if self.soilTempMethod == 'mohseni':
+                    self.avgTemperatureShort = iniConditions['routing']['avgTemperatureShort']
 
         self.channelStorage        = pcr.ifthen(self.landmask, pcr.cover(self.channelStorage, 0.0))
         self.readAvlChannelStorage = pcr.ifthen(self.landmask, pcr.cover(self.readAvlChannelStorage, 0.0))
@@ -531,6 +571,8 @@ class Routing(object):
             self.temp_water_height = self.eta * pow(self.avgDischarge, self.nu)
             if self.soilTempMethod == 'smoothT':
                 self.soilTemperatureKelvin = pcr.ifthen(self.landmask, pcr.cover(self.soilTemperatureKelvin, 0.0))
+            if self.soilTempMethod == 'mohseni':
+                self.avgTemperatureShort = pcr.ifthen(self.landmask, pcr.cover(self.avgTemperatureShort, 0.0))
         # make sure that timestepsToAvgDischarge is consistent (or the same) for the entire map:
         try:
             self.timestepsToAvgDischarge = pcr.mapmaximum(self.timestepsToAvgDischarge)
@@ -1694,7 +1736,7 @@ class Routing(object):
                            pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
         self.avgBaseflow = pcr.max(0.0, self.avgBaseflow)
 
-    def calculate_statistics_routing_only(self):
+    def calculate_statistics_routing_only(self, meteo):
 
         # short term average inflow (m3/s) and long term average outflow (m3/s) from lake and reservoirs
         self.avgInflow = pcr.ifthen(self.landmask, pcr.cover(self.WaterBodies.avgInflow, 0.0))
@@ -1720,6 +1762,12 @@ class Routing(object):
         self.avgDischargeShort = self.avgDischargeShort + deltaAnoDischargeShort/\
                                  pcr.min(self.maxTimestepsToAvgDischargeShort, self.timestepsToAvgDischarge)
         self.avgDischargeShort = pcr.max(0.0, self.avgDischargeShort)
+        #
+        # - short term average air temperature
+        #
+        deltaAnoTemperatureShort = meteo.temperature - self.avgTemperatureShort
+        self.avgTemperatureShort = self.avgTemperatureShort + deltaAnoTemperatureShort/\
+                                 pcr.min(self.maxTimestepsToAvgTemperatureShort, self.timestepsToAvgTemperatureShort)
 
     def estimate_discharge_for_environmental_flow(self, channelStorage):
 
@@ -2478,7 +2526,7 @@ class Routing(object):
         ###############################################################################################################
 
         # calculate the statistics of long and short term flow values
-        self.calculate_statistics_routing_only()
+        self.calculate_statistics_routing_only(meteo)
 
         self.allow_extra_evaporation_and_abstraction = False  # This option is still EXPERIMENTAL (and not recommended)
         if self.allow_extra_evaporation_and_abstraction:
@@ -2573,6 +2621,11 @@ class Routing(object):
         if self.soilTempMethod == 'smoothT':
             self.soilTemperatureKelvin = (1 - self.kappa) * self.soilTemperatureKelvin \
                                   + self.kappa * self.temperatureKelvin
+        if self.soilTempMethod == 'mohseni':
+            self.soilTemperatureKelvin = self.mmew + (self.malpha - self.mmew)/\
+                (1.0 - pcr.exp(self.mgamma*(self.mbeta - self.avgTemperatureShort))) + 273.15
+            self.deltaTMelt = self.soilTemperatureKelvin + self.mfact
+            self.timestepsToAvgTemperatureShort += 1.0
 
         # Set temperature of local inflow
         landT = pcr.cover(self.directRunoff_rain/landRunoff *
