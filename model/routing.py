@@ -366,11 +366,6 @@ class Routing(object):
             # Reduction in the temperature of falling rain [K]
             self.deltaTPrec = vos.readPCRmapClone(iniItems.routingOptions['deltaTPrec'],
                                                   self.cloneMap, self.tmpDir, self.inputDir)
-            # Increase in the temperature of melting snow and ice [K]
-            self.deltaTMelt = pcr.scalar(1.0)
-            if self.soilTempMethod != 'mohseni':
-                self.deltaTMelt = vos.readPCRmapClone(iniItems.routingOptions['deltaTMelt'],
-                                                      self.cloneMap, self.tmpDir, self.inputDir)
             # Scale factor for wind speed [-]
             self.scaleFactorWind = vos.readPCRmapClone(iniItems.routingOptions['scaleFactorWind'],
                                                        self.cloneMap, self.tmpDir, self.inputDir)
@@ -385,15 +380,21 @@ class Routing(object):
 
             # Method and data for estimating soil temperature
             self.soilTempMethod = iniItems.meteoOptions['soilTemperatureMethod']
-            if self.soilTempMethod == 'annualT':
-                self.annualTFileNC = iniItems.meteoOptions['annualAvgTNC']
-            if self.soilTempMethod == 'smoothT':
-                self.kappa = vos.readPCRmapClone(iniItems.meteoOptions['kappa'],
-                                                 self.cloneMap, self.tmpDir, self.inputDir)
+            if self.soilTempMethod != 'mohseni':
+                # Increase in the temperature of melting snow and ice [K]; constant value
+                self.deltaTMelt = vos.readPCRmapClone(iniItems.routingOptions['deltaTMelt'],
+                                                      self.cloneMap, self.tmpDir, self.inputDir)
+                if self.soilTempMethod == 'annualT':
+                    self.annualTFileNC = iniItems.meteoOptions['annualAvgTNC']
+                if self.soilTempMethod == 'smoothT':
+                    self.kappa = vos.readPCRmapClone(iniItems.meteoOptions['kappa'],
+                                                     self.cloneMap, self.tmpDir, self.inputDir)
             if self.soilTempMethod == 'mohseni':
+                # Increase in the temperature of melting snow and ice [K] updated dynamically; set dummy value for now
+                self.deltaTMelt = pcr.scalar(1.0)
                 # maximum number of days (timesteps) to calculate short term average air temperature
-                # (default: 1 week = 1 * 7 days = 7)
-                self.maxTimestepsToAvgTemperatureShort = 7.0
+                self.maxTimestepsToAvgTemperatureShort = vos.readPCRmapClone(iniItems.meteoOptions['avgPeriodTemp'],
+                                                                             self.cloneMap, self.tmpDir, self.inputDir)
                 # Regression parameters mew (min), alpha (max), beta (shift) and gamma (slope)
                 self.mmew = vos.readPCRmapClone(iniItems.meteoOptions['mohseniMin'],
                                                  self.cloneMap, self.tmpDir, self.inputDir)
