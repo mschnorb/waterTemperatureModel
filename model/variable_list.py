@@ -38,7 +38,7 @@ comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # Short-term average sir temperature
-pcrglobwb_variable_name = 'avgTemperatureShort'
+pcrglobwb_variable_name = 'avgTempShort'
 netcdf_short_name[pcrglobwb_variable_name] = 'air_temperature'
 netcdf_unit[pcrglobwb_variable_name]       = 'degrees Celsius'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
