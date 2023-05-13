@@ -2623,7 +2623,7 @@ class Routing(object):
                                   + self.kappa * self.temperatureKelvin
         if self.soilTempMethod == 'mohseni':
             self.soilTemperatureKelvin = self.mmew + (self.malpha - self.mmew)/\
-                (1.0 - pcr.exp(self.mgamma*(self.mbeta - self.avgTemperatureShort))) + 273.15
+                (1.0 + pcr.exp(self.mgamma*(self.mbeta - self.avgTemperatureShort))) + 273.15
             self.deltaTMelt = self.soilTemperatureKelvin + self.mfact
             self.timestepsToAvgTemperatureShort += 1.0
 
