@@ -1765,9 +1765,10 @@ class Routing(object):
         #
         # - short term average air temperature
         #
-        deltaAnoTemperatureShort = meteo.temperature - self.avgTemperatureShort
-        self.avgTemperatureShort = self.avgTemperatureShort + deltaAnoTemperatureShort/\
-                                 pcr.min(self.maxTimestepsToAvgTemperatureShort, self.timestepsToAvgTemperatureShort)
+        if self.soilTempMethod == "mohseni":
+            deltaAnoTemperatureShort = meteo.temperature - self.avgTemperatureShort
+            self.avgTemperatureShort = self.avgTemperatureShort + deltaAnoTemperatureShort/\
+                                     pcr.min(self.maxTimestepsToAvgTemperatureShort, self.timestepsToAvgTemperatureShort)
 
     def estimate_discharge_for_environmental_flow(self, channelStorage):
 
