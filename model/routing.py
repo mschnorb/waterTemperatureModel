@@ -307,6 +307,7 @@ class Routing(object):
         #self.deltaIceThickness = 0.0
 
         if self.waterTemperature:
+            logger.info("Simulating water temperature.")
             # constants for the energy balance
             self.grav = pcr.scalar(9.80665)              # gravitational acceleration (m/s2)
             self.densityIce = 920.0                      # density of ice [kg/m3]
@@ -319,6 +320,15 @@ class Routing(object):
             self.thermCondIce = pcr.scalar(2.22)         # thermal conductivity of ice [W/m/K] TODO: input as state
             self.molCondHeatWater = pcr.scalar(0.6)      # molecular conductivty of heat for water [W/m/K]
             self.stefanBoltzman = 5.67e-8                # Stefan-Boltzman constant [W/m2/K-4]
+
+            # Option to model surface Ice
+            try:
+              self.surfaceIce = iniItems.routingOptions['surfaceIce'] == "True"
+            except:
+              self.surfaceIce = False
+            # Log choice
+            if self.surfaceIce:
+              logger.info("Simulating surface Ice.")
 
             # Path to daily meteorology files
             self.radShortFileNC = iniItems.meteoOptions['radiationShortNC']
@@ -2646,13 +2656,18 @@ class Routing(object):
                                pcr.max(self.iceThresTemp + 0.1, self.temperatureKelvin-self.deltaTPrec) * \
                                self.specificHeatWater * self.densityWater / timeSec
 
-        # Update noIce condition; use conditions from previous timestep; set nominal ice thickness if necessary
-        # to avoid missing values in subsequent calculations
-        self.noIce = pcr.ifthenelse(self.iceThickness > 0,
-                                    pcr.boolean(0),
-                                    pcr.ifthenelse((self.surfaceHeatTransfer < 0) &
-                                                   (self.waterTemp <= self.iceThresTemp + 0.1),
-                                                   pcr.boolean(0), pcr.boolean(1)))
+        # If modelling surface Ice, update noIce condition, else set noIce to TRUE
+        if self.surfaceIce:
+          # Update noIce condition; use conditions from previous timestep
+          self.noIce = pcr.ifthenelse(self.iceThickness > 0,
+                                      pcr.boolean(0),
+                                      pcr.ifthenelse((self.surfaceHeatTransfer < 0) &
+                                                     (self.waterTemp <= self.iceThresTemp + 0.1),
+                                                     pcr.boolean(0), pcr.boolean(1)))
+        else:
+          self.noIce = pcr.boolean(1)
+        
+        # Set nominal ice thickness if necessary to avoid missing values in subsequent calculations
         self.iceThickness = pcr.ifthenelse(self.noIce, 0.0,
                                            pcr.ifthenelse(self.iceThickness == 0, 0.001, self.iceThickness))
 
