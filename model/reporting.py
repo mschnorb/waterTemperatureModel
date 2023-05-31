@@ -435,6 +435,15 @@ class Reporting(object):
         if "totEW" in self.variables_for_report:
             self.totEW = self._model.routing.totEW
 
+        if "totVolEW" in self.varibales_for_report:
+            self.totVolEW = self._model.routing.totalVolumeEW
+
+        if "volEW" in self.variables_for_report:
+            self.volEW = self._model.routing.volumeEW
+
+        if "remVolEW" in self.variables_for_report:
+            self.remVolEW = self._model.routing.remainingVolumeEW
+
         if "surfaceTemp" in self.variables_for_report:
             self.surfaceTemp = self._model.routing.surfaceTemp
 
