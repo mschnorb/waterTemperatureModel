@@ -401,10 +401,10 @@ class WaterBodies(object):
         # http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
         temp = pcr.max(1.0, pcr.min(maxTimestepsToAvgDischargeLong,
                                     self.timestepsToAvgDischarge - 1.0 + length_of_time_step / vos.secondsPerDay()))
-        deltaOutflow = waterBodyOutflowInM3PerSec - self.avgOutflow
-        R = deltaOutflow * (length_of_time_step / vos.secondsPerDay()) / temp
-        self.avgOutflow = self.avgOutflow + R
-        self.avgOutflow = pcr.max(0.0, self.avgOutflow)
+        #deltaOutflow = waterBodyOutflowInM3PerSec - self.avgOutflow
+        #R = deltaOutflow * (length_of_time_step / vos.secondsPerDay()) / temp
+        #self.avgOutflow = self.avgOutflow + R
+        #self.avgOutflow = pcr.max(0.0, self.avgOutflow)
 
         # update waterBodyStorage (after outflow):
         self.waterBodyStorage = self.waterBodyStorage - self.waterBodyOutflow

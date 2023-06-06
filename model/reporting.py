@@ -387,6 +387,9 @@ class Reporting(object):
         if "avgDischarge" in self.variables_for_report:
             self.avgDischarge = self._model.routing.avgDischarge
 
+        if "avgOutflow" in self.variables_for_report:
+            self.avgOutflow = self._model.routing.avgOutflow
+
         # Channel geometry
         if "wMean" in self.variables_for_report:
             self.wMean = self._model.routing.wMean
@@ -435,7 +438,7 @@ class Reporting(object):
         if "totEW" in self.variables_for_report:
             self.totEW = self._model.routing.totEW
 
-        if "totVolEW" in self.varibales_for_report:
+        if "totVolEW" in self.variables_for_report:
             self.totVolEW = self._model.routing.totalVolumeEW
 
         if "volEW" in self.variables_for_report:

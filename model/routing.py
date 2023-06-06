@@ -1760,10 +1760,10 @@ class Routing(object):
         dischargeUsed = pcr.max(0.0, self.discharge)
         dischargeUsed = pcr.max(dischargeUsed, self.disChanWaterBody)
         #
-        deltaAnoDischarge = dischargeUsed - self.avgDischarge
-        self.avgDischarge = self.avgDischarge + deltaAnoDischarge/\
-                            pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
-        self.avgDischarge = pcr.max(0.0, self.avgDischarge)
+        #deltaAnoDischarge = dischargeUsed - self.avgDischarge
+        #self.avgDischarge = self.avgDischarge + deltaAnoDischarge/\
+        #                    pcr.min(self.maxTimestepsToAvgDischargeLong, self.timestepsToAvgDischarge)
+        #self.avgDischarge = pcr.max(0.0, self.avgDischarge)
         self.m2tDischarge = self.m2tDischarge + pcr.abs(deltaAnoDischarge*(dischargeUsed - self.avgDischarge))
         #
         # - short term average discharge

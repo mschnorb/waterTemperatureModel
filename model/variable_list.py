@@ -334,6 +334,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# Long-term average Lake/Reservoir Outflow
+pcrglobwb_variable_name = 'avgOutflow'
+netcdf_short_name[pcrglobwb_variable_name] = 'avgOutflow'
+netcdf_unit[pcrglobwb_variable_name]       = 'm3.s-1'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'long-term average outflow from lakes and reservoirs'
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
 # Water heat transfer to/from atmosphere
 #pcrglobwb_variable_name = 'waterHeatTransfer'
 #netcdf_short_name[pcrglobwb_variable_name] = 'waterHeatTransfer'
