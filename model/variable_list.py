@@ -17,23 +17,34 @@ latex_symbol      = {}
 
 # precipitation
 pcrglobwb_variable_name = 'precipitation'
-netcdf_short_name[pcrglobwb_variable_name] = 'lwe_thickness_of_precipitation_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'precipitation'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 netcdf_long_name[pcrglobwb_variable_name]  = 'precipitation'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'lwe thickness of precipitation amount'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # air temperature
 pcrglobwb_variable_name = 'temperature'
-netcdf_short_name[pcrglobwb_variable_name] = 'air_temperature'
+netcdf_short_name[pcrglobwb_variable_name] = 'airTemp'
 netcdf_unit[pcrglobwb_variable_name]       = 'degrees Celsius'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = 'air temperature'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'surface air temperature'
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Short-term average air temperature
+pcrglobwb_variable_name = 'avgTempShort'
+netcdf_short_name[pcrglobwb_variable_name] = 'avgAirTemp'
+netcdf_unit[pcrglobwb_variable_name]       = 'degrees Celsius'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'short-term average surface air temperature'
+description[pcrglobwb_variable_name]       = 'Running average of surface air temperature'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
@@ -50,89 +61,89 @@ latex_symbol[pcrglobwb_variable_name]      = None
 
 # directRunoff                    
 pcrglobwb_variable_name = 'directRunoff'
-netcdf_short_name[pcrglobwb_variable_name] = 'thickness_of_surface_runoff_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'directRunoff'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 netcdf_long_name[pcrglobwb_variable_name]  = 'surface runoff'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'thickness of surface runoff amount'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # interflowTotal                  
 pcrglobwb_variable_name = 'interflowTotal'
-netcdf_short_name[pcrglobwb_variable_name] = 'thickness_of_interflow_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'interflow'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 netcdf_long_name[pcrglobwb_variable_name]  = 'interflow'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'thickness of interflow  amount'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # baseflow                  
 pcrglobwb_variable_name = 'baseflow'
-netcdf_short_name[pcrglobwb_variable_name] = 'thickness_of_baseflow_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'baseflow'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 netcdf_long_name[pcrglobwb_variable_name]  = 'baseflow'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'thickness of baseflow amount'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # waterBodyActEvaporation
 pcrglobwb_variable_name = 'waterBodyActEvaporation'
-netcdf_short_name[pcrglobwb_variable_name] = 'lwe_thickness_of_water_evaporation_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'actEvaporation'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 netcdf_long_name[pcrglobwb_variable_name]  = 'actual evaporation from water bodies'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'lwe thickness of water evaporation amount'
 comment[pcrglobwb_variable_name]           = 'Flux values given are over the entire cell area (not only over surface water body fraction).'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # waterBodyPotEvaporation
 pcrglobwb_variable_name = 'waterBodyPotEvaporation'
-netcdf_short_name[pcrglobwb_variable_name] = 'lwe_thickness_of_potential_water_evaporation_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'potEvaporation'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 netcdf_long_name[pcrglobwb_variable_name]  = 'potential evaporation from water bodies'
-description[pcrglobwb_variable_name]       = None
+description[pcrglobwb_variable_name]       = 'lwe thickness of potential water evaporation amount'
 comment[pcrglobwb_variable_name]           = 'Flux values given are over the entire cell area (not only over surface water body fraction).'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # totalEvaporation
 #pcrglobwb_variable_name = 'totalEvaporation'
-#netcdf_short_name[pcrglobwb_variable_name] = 'total_evaporation'
+#netcdf_short_name[pcrglobwb_variable_name] = 'totEvaporation'
 #netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 #netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1'
 #netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
 #netcdf_long_name[pcrglobwb_variable_name]  = 'surface_water_evaporation_flux'
-#description[pcrglobwb_variable_name]       = None
+#description[pcrglobwb_variable_name]       = 'lwe thickness of total evaporation amount'
 #comment[pcrglobwb_variable_name]           = 'Including from water bodies.'
 #latex_symbol[pcrglobwb_variable_name]      = None
 
 # runoff
 pcrglobwb_variable_name = 'runoff'
-netcdf_short_name[pcrglobwb_variable_name] = 'lwe_thickness_of_runoff_amount'
+netcdf_short_name[pcrglobwb_variable_name] = 'runoff'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
-netcdf_long_name[pcrglobwb_variable_name]  = 'runoff from land'
+netcdf_long_name[pcrglobwb_variable_name]  = 'local runoff from land'
 description[pcrglobwb_variable_name]       = 'direct_runoff + interflow + baseflow, but not including local runoff from water bodies.'
-comment[pcrglobwb_variable_name]           = None
+comment[pcrglobwb_variable_name]           = 'lwe thickness of runoff amount'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # accuRunoff
 pcrglobwb_variable_name = 'accuRunoff'
-netcdf_short_name[pcrglobwb_variable_name] = 'accumulated_runoff_flux'
+netcdf_short_name[pcrglobwb_variable_name] = 'accRunoffFlux'
 netcdf_unit[pcrglobwb_variable_name]       = 'm3.s-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = 'accumulated runoff'
-description[pcrglobwb_variable_name]       = 'Accumulated runoff along the drainage network,not including local changes in water bodies'
+description[pcrglobwb_variable_name]       = 'Accumulated runoff along the drainage network, not including local changes in water bodies'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
@@ -160,7 +171,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 
 # totalRunoff
 pcrglobwb_variable_name = 'totalRunoff'
-netcdf_short_name[pcrglobwb_variable_name] = 'total_runoff'
+netcdf_short_name[pcrglobwb_variable_name] = 'totalRunoff'
 netcdf_unit[pcrglobwb_variable_name]       = 'm.day-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = 'm.month-1' 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = 'm.year-1'
@@ -182,22 +193,22 @@ latex_symbol[pcrglobwb_variable_name]      = None
 
 # accuTotalRunoff
 pcrglobwb_variable_name = 'accuTotalRunoff'
-netcdf_short_name[pcrglobwb_variable_name] = 'accumulated_total_surface_runoff'
+netcdf_short_name[pcrglobwb_variable_name] = 'accTotalRunoff'
 netcdf_unit[pcrglobwb_variable_name]       = 'm3.s-1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = None
-description[pcrglobwb_variable_name]       = None
-comment[pcrglobwb_variable_name]           = "Including runoff from water bodies."
+netcdf_long_name[pcrglobwb_variable_name]  = 'accumulated total surfaec runoff'
+description[pcrglobwb_variable_name]       = 'Accumulated total surface runoff'
+comment[pcrglobwb_variable_name]           = 'Including runoff from water bodies.'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # surfaceWaterStorage
 pcrglobwb_variable_name = 'surfaceWaterStorage'
-netcdf_short_name[pcrglobwb_variable_name] = 'surface_water_storage'
+netcdf_short_name[pcrglobwb_variable_name] = 'surfaceWaterStorage'
 netcdf_unit[pcrglobwb_variable_name]       = 'm'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'waterbody outflow where outlet'
 description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Negative values may be reported, due to excessive demands.'
 latex_symbol[pcrglobwb_variable_name]      = None
@@ -215,7 +226,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 
 # waterBodyOutflow
 pcrglobwb_variable_name = 'waterBodyOutflow'
-netcdf_short_name[pcrglobwb_variable_name] = 'waterbody_outflow'
+netcdf_short_name[pcrglobwb_variable_name] = 'waterbodyOutflow'
 netcdf_unit[pcrglobwb_variable_name]       = 'm3'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
@@ -226,7 +237,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 
 # Dynamic water fraction
 pcrglobwb_variable_name = 'dynamicFracWat'
-netcdf_short_name[pcrglobwb_variable_name] = 'dynamic_water_fraction'
+netcdf_short_name[pcrglobwb_variable_name] = 'dynamicFracWater'
 netcdf_unit[pcrglobwb_variable_name]       = '1'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
@@ -274,8 +285,8 @@ netcdf_short_name[pcrglobwb_variable_name] = 'channelStorage'
 netcdf_unit[pcrglobwb_variable_name]       = 'm3'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = 'total in channel storage'
-description[pcrglobwb_variable_name]       = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'total in-channel storage'
+description[pcrglobwb_variable_name]       = 'Total channel and waterbody storage'
 comment[pcrglobwb_variable_name]           = 'Riverine channel storage, values include reservoirs and lakes'
 latex_symbol[pcrglobwb_variable_name]      = None
 
@@ -285,7 +296,7 @@ netcdf_short_name[pcrglobwb_variable_name] = 'waterHeight'
 netcdf_unit[pcrglobwb_variable_name]       = 'm'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = 'water height in the channle'
+netcdf_long_name[pcrglobwb_variable_name]  = 'water height in the channel'
 description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = 'Water height in channel, values include reservoirs and lakes'
 latex_symbol[pcrglobwb_variable_name]      = None
@@ -323,6 +334,17 @@ description[pcrglobwb_variable_name]       = None
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
+# Long-term average Lake/Reservoir Outflow
+pcrglobwb_variable_name = 'avgOutflow'
+netcdf_short_name[pcrglobwb_variable_name] = 'avgOutflow'
+netcdf_unit[pcrglobwb_variable_name]       = 'm3.s-1'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'long-term average outflow from lakes and reservoirs'
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
 # Water heat transfer to/from atmosphere
 #pcrglobwb_variable_name = 'waterHeatTransfer'
 #netcdf_short_name[pcrglobwb_variable_name] = 'waterHeatTransfer'
@@ -336,7 +358,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 
 # Soil temperature (K)
 pcrglobwb_variable_name = 'soilTemp'
-netcdf_short_name[pcrglobwb_variable_name] = 'soil_temperature'
+netcdf_short_name[pcrglobwb_variable_name] = 'soilTemperature'
 netcdf_unit[pcrglobwb_variable_name]       = 'K'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
@@ -425,7 +447,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 # Change in energy storage from local surface energy balance
 pcrglobwb_variable_name = 'dtotEWLoc'
 netcdf_short_name[pcrglobwb_variable_name] = 'dtotEWLoc'
-netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_unit[pcrglobwb_variable_name]       = 'J.m-2'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = None
@@ -436,7 +458,7 @@ latex_symbol[pcrglobwb_variable_name]      = None
 # Change in energy storage from local advected energy
 pcrglobwb_variable_name = 'dtotEWAdv'
 netcdf_short_name[pcrglobwb_variable_name] = 'dtotEWAdv'
-netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_unit[pcrglobwb_variable_name]       = 'J.m-2'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = None
@@ -444,14 +466,47 @@ description[pcrglobwb_variable_name]       = 'Change in energy storage from loca
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
-# Total energy storage
+# Total energy storage by area
 pcrglobwb_variable_name = 'totEW'
 netcdf_short_name[pcrglobwb_variable_name] = 'totEW'
-netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_unit[pcrglobwb_variable_name]       = 'J.m-2'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = 'total energy storage'
-description[pcrglobwb_variable_name]       = 'Total energy storage'
+netcdf_long_name[pcrglobwb_variable_name]  = 'total energy storage per unit area'
+description[pcrglobwb_variable_name]       = 'Total energy storage per unit area'
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Total energy storage
+pcrglobwb_variable_name = 'totVolEW'
+netcdf_short_name[pcrglobwb_variable_name] = 'totVolEW'
+netcdf_unit[pcrglobwb_variable_name]       = 'J'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'total waterbody or channel energy storage'
+description[pcrglobwb_variable_name]       = 'Total waterbody or channel energy storage'
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Energy added/lost from routing
+pcrglobwb_variable_name = 'volEW'
+netcdf_short_name[pcrglobwb_variable_name] = 'volEW'
+netcdf_unit[pcrglobwb_variable_name]       = 'J'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'component of total waterbody or channel energy added due to routing'
+description[pcrglobwb_variable_name]       = 'Component of total waterbody or channel energy added due to routing'
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Energy stored/remaining during routing
+pcrglobwb_variable_name = 'remVolEW'
+netcdf_short_name[pcrglobwb_variable_name] = 'remVolEW'
+netcdf_unit[pcrglobwb_variable_name]       = 'J'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'component of total waterbody or channel energy remaining during routing'
+description[pcrglobwb_variable_name]       = 'Component of total waterbody or channel energy remaining during routing'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 

@@ -387,6 +387,9 @@ class Reporting(object):
         if "avgDischarge" in self.variables_for_report:
             self.avgDischarge = self._model.routing.avgDischarge
 
+        if "avgOutflow" in self.variables_for_report:
+            self.avgOutflow = self._model.routing.avgOutflow
+
         # Channel geometry
         if "wMean" in self.variables_for_report:
             self.wMean = self._model.routing.wMean
@@ -435,8 +438,20 @@ class Reporting(object):
         if "totEW" in self.variables_for_report:
             self.totEW = self._model.routing.totEW
 
+        if "totVolEW" in self.variables_for_report:
+            self.totVolEW = self._model.routing.totalVolumeEW
+
+        if "volEW" in self.variables_for_report:
+            self.volEW = self._model.routing.volumeEW
+
+        if "remVolEW" in self.variables_for_report:
+            self.remVolEW = self._model.routing.remainingVolumeEW
+
         if "surfaceTemp" in self.variables_for_report:
             self.surfaceTemp = self._model.routing.surfaceTemp
+
+        if "avgTempShort" in self.variables_for_report:
+            self.avgTempShort = self._model.routing.avgTemperatureShort
 
         # Water quality
         if "O2" in self.variables_for_report:
