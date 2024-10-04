@@ -46,7 +46,7 @@ class WaterBodies(object):
         else:
             self.useNetCDF = True
             self.ncFileInp = vos.getFullPath(iniItems.routingOptions['waterBodyInputNC'], self.inputDir)
-            self.waterBodyShF = iniItems.routingOptions['waterBodyShF']
+            #self.waterBodyShF = iniItems.routingOptions['waterBodyShF']
 
         # Parameters for weir formula
         self.minWeirWidth = minChannelWidth  # minimum width (m) used in the weir formula
@@ -190,11 +190,11 @@ class WaterBodies(object):
 
         # water body shape factor
         if self.useNetCDF:
-            self.waterBodyShapeFactor = vos.readPCRmapClone(self.waterBodyShF, self.cloneMap,
-                                                            self.tmpDir, self.inputDir)
-            #self.waterBodyShapeFactor = vos.netcdf2PCRobjClone(self.ncFileInp, 'waterBodyShF',
-            #                                                   date_used, useDoy='yearly',
-            #                                                   cloneMapFileName=self.cloneMap)
+            #self.waterBodyShapeFactor = vos.readPCRmapClone(self.waterBodyShF, self.cloneMap,
+            #                                                self.tmpDir, self.inputDir)
+            self.waterBodyShapeFactor = vos.netcdf2PCRobjClone(self.ncFileInp, 'waterBodyShF',
+                                                               date_used, useDoy='yearly',
+                                                               cloneMapFileName=self.cloneMap)
         else:
             self.waterBodyShapeFactor = vos.readPCRmapClone(self.waterBodyShF+str(year_used)+".map",
                                                             self.cloneMap, self.tmpDir, self.inputDir,

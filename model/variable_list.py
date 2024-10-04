@@ -252,9 +252,20 @@ netcdf_short_name[pcrglobwb_variable_name] = 'waterTemperature'
 netcdf_unit[pcrglobwb_variable_name]       = 'K'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'water temperature where open water'
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Water temperature assuming fully mixed conditions'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Surface water temperature
+pcrglobwb_variable_name = 'surfaceWaterTemp'
+netcdf_short_name[pcrglobwb_variable_name] = 'surfaceWaterTemperature'
+netcdf_unit[pcrglobwb_variable_name]       = 'K'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None 
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = 'surface temperature where open water'
 description[pcrglobwb_variable_name]       = None
-comment[pcrglobwb_variable_name]           = 'Surface water temperature assuming fully mixed conditions'
+comment[pcrglobwb_variable_name]           = 'Water temperature of surface layer in water bodies. Smae as waterTemperature for channels'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # Ice Thickness

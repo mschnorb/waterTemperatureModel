@@ -45,6 +45,7 @@ class Routing(object):
 
         if self.waterTemperature:
             result['waterTemperature'] = self.waterTemp  # C; water temperature
+            result['surfaceWaterTemperature'] = self.surfaceWaterTemp  # C; surface water temperature
             result['iceThickness'] = self.iceThickness   # m; iceThickness
             result['surfaceHeatTransfer'] = self.surfaceHeatTransfer  # W/m2; net surface heat transfer
             if self.soilTempMethod == 'smoothT':
@@ -499,6 +500,13 @@ class Routing(object):
                 else:
                     self.waterTemp = pcr.scalar(self.iceThresTemp + 5.0)
 
+                # Default value for surface water temperature is waterTemp
+                if iniItems.routingOptions['surfaceWaterTemperatureIni'] != "None":
+                    self.surfaceWaterTemp = vos.readPCRmapClone(iniItems.routingOptions['surfaceWaterTemperatureIni'],
+                                                         self.cloneMap, self.tmpDir, self.inputDir)
+                else:
+                    self.surfaceWaterTemp = pcr.scalar(self.iceThresTemp + 5.0)
+
                 # Default value for ice thickness is 0 m
                 if iniItems.routingOptions['iceThicknessIni'] != "None":
                     self.iceThickness = vos.readPCRmapClone(iniItems.routingOptions['iceThicknessIni'],
@@ -550,6 +558,7 @@ class Routing(object):
 
             if self.waterTemperature:
                 self.waterTemp = iniConditions['routing']['waterTemperature']
+                self.surfaceWaterTemp = iniConditions['routing']['surfaceWaterTemperature']
                 self.iceThickness = iniConditions['routing']['iceThickness']
                 self.surfaceHeatTransfer = iniConditions['routing']['surfaceHeatTransfer']
                 if self.soilTempMethod == 'smoothT':
@@ -574,6 +583,7 @@ class Routing(object):
 
         if self.waterTemperature:
             self.waterTemp = pcr.ifthen(self.landmask, pcr.cover(self.waterTemp, 0.0))
+            self.surfaceWaterTemp = pcr.ifthen(self.landmask, pcr.cover(self.surfaceWaterTemp, 0.0))
             self.iceThickness = pcr.ifthen(self.landmask, pcr.cover(self.iceThickness, 0.0))
             self.surfaceHeatTransfer = pcr.ifthen(self.landmask, pcr.cover(self.surfaceHeatTransfer, 0.0))
             self.channelStorageTimeBefore = self.channelStorage
@@ -2284,6 +2294,12 @@ class Routing(object):
         self.remainingVolumeEW = cover(ifthen(self.WaterBodies.waterBodyOut, energyTotal - self.volumeEW), 0.0)
 
     def energyWaterBodyAverage(self):
+        # MAS:   Calculate both waterTemp and surfaceWaterTemp
+        #        where waterTemp is average temperature in over the
+        #        entire water volume and surfaceWaterTemp is the
+        #        temperature of the top (surface) water layer.
+        #        For channele surafceWaterTemp = waterTemp
+        #        For water bodies surfaceWaterTemp = epilimnion temperature
         self.totalVolumeEW = self.volumeEW + self.remainingVolumeEW
 
         energyTotal = cover(
@@ -2315,10 +2331,18 @@ class Routing(object):
                                            0, self.iceThickness)
         self.channelStorageNow = self.channelStorageNow - self.deltaIceThickness * self.dynamicFracWat * self.cellArea
 
+        # Average temperature in water bodies and channels
         self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,
                                         self.totEW/self.temp_water_height/(self.specificHeatWater*self.densityWater),
                                         self.temperatureKelvin)
         self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp+0.1, self.iceThresTemp+0.1, self.waterTemp)
+        
+        # Update surface water temperature to reflect epilimnion (surface) temperature in water bodies
+        self.getEnergyRatio()
+        self.surfaceWaterTemp = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                                                 self.activeEnergy/self.activeStorage/(self.specificHeatWater*self.densityWater)),
+                                      self.waterTemp)
+        self.surfaceWaterTemp = pcr.ifthenelse(self.surfaceWaterTemp < self.iceThresTemp+0.1, self.iceThresTemp+0.1, self.surfaceWaterTemp)
 
     def update_routing_only(self, currTimeStep, meteo):
 
@@ -2627,6 +2651,8 @@ class Routing(object):
         # Update soil temperature; uses air temperature as a proxy with two smoothing options:
         # option 1: uses a running mean of annual air temperature (supplied as a separate forcing)
         # option 2: uses a smoothing function of daily air temperature Tsoil(t) = (1-k)*Tsoil(t-1) + k*tas(t)
+        # option 3: uses non-linear regression on running-average air temperature
+        #           where Tsoil(t) = m+(a-m)/[1+exp(g*(B-Tavg(t)))]
         if self.soilTempMethod == 'annualT':
             self.soilTemperatureKelvin = self.annualT
         if self.soilTempMethod == 'smoothT':
@@ -2659,11 +2685,11 @@ class Routing(object):
 
         # If modelling surface Ice, update noIce condition, else set noIce to TRUE
         if self.surfaceIce:
-          # Update noIce condition; use conditions from previous timestep
+          # Update noIce condition; use conditions from previous timestep; use surface water temperature
           self.noIce = pcr.ifthenelse(self.iceThickness > 0,
                                       pcr.boolean(0),
                                       pcr.ifthenelse((self.surfaceHeatTransfer < 0) &
-                                                     (self.waterTemp <= self.iceThresTemp + 0.1),
+                                                     (self.surfaceWaterTemp <= self.iceThresTemp + 0.1),
                                                      pcr.boolean(0), pcr.boolean(1)))
         else:
           self.noIce = pcr.boolean(1)
@@ -2675,9 +2701,9 @@ class Routing(object):
         # Bulk extinction coefficient for solar radiation through ice from Shen and Chiang (1984), Eqn. 7
         extinctCoef = pcr.ifthenelse(self.noIce, 0.0, self.Bi * pcr.exp(-self.Ti * self.iceThickness))
 
-        # Update surface surface temperature for mixed open water and ice conditions [K]
+        # Update surface temperature for mixed open water and ice conditions [K]
         # Surface temperature for ice from Shen and Chiang (1984), Eqn. 30
-        self.surfaceTemp = pcr.ifthenelse(self.noIce, self.waterTemp,
+        self.surfaceTemp = pcr.ifthenelse(self.noIce, self.surfaceWaterTemp,
                                           pcr.min(self.iceThickness/self.thermCondIce *
                                           self.surfaceHeatTransfer + 273.15, self.iceThresTemp))
         # Set constraint such that surface temperature, if negative, is never less than air temperature (if also
@@ -2744,9 +2770,9 @@ class Routing(object):
         # Shen and Chiang, 1984) or Qw = kw(dT/dz) for laminar flow (i.e. lakes; Lepparanta, 2010)
         iceHeatTransfer = pcr.ifthenelse(
             isLake,
-            self.molCondHeatWater * (self.waterTemp - self.iceThresTemp) / loc_water_height,
+            self.molCondHeatWater * (self.surfaceWaterTemp - self.iceThresTemp) / loc_water_height,
             self.heatTransferIceConstant * (self.waterVelocity**0.8 / loc_water_height**0.2) *
-            (self.waterTemp - self.iceThresTemp))
+            (self.surfaceWaterTemp - self.iceThresTemp))
         # Ice thickness change at bottom of ice (growth or melt possible); Eqn. 32 from Shen and Chiang (1984)
         deltaIceThickness_bottom = pcr.ifthenelse(self.noIce, 0.0,
                                                   timeSec / (self.densityIce * self.latentHeatFusion) *
