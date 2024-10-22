@@ -220,6 +220,15 @@ class WaterBodies(object):
         self.waterBodyTyp = pcr.ifthenelse(
             self.waterBodyCap > 0., self.waterBodyTyp, pcr.ifthenelse(pcr.scalar(self.waterBodyTyp) == 2,
                                                                       pcr.nominal(1), self.waterBodyTyp))
+
+        # waterbody latitude
+        #if self.useNetCDF:
+        #    self.resLatitude = vos.netcdf2PCRobjCloneWithoutTime(self.ncFileInp, 'lat',
+        #                                                         cloneMapFileName=self.cloneMap)
+        #else:
+        #    self.resLatitude = vos.readPCRmapClone(self.resLat+str(year_used)+".map",
+        #                                           self.cloneMap, self.tmpDir, self.inputDir)
+
         # final corrections:
         # make sure that all lakes and/or reservoirs have surface areas
         self.waterBodyTyp = pcr.ifthen(self.waterBodyArea > 0., self.waterBodyTyp)
@@ -267,6 +276,8 @@ class WaterBodies(object):
         self.waterBodyStorage = pcr.ifthen(self.landmask, self.waterBodyStorage)
         self.avgInflow = pcr.ifthen(self.landmask, self.avgInflow)
         self.avgOutflow = pcr.ifthen(self.landmask, self.avgOutflow)
+
+        self.waterBodyMD = pcr.ifthenelse(self.waterBodyArea/1000./1000.>25., pcr.scalar(10.0), pcr.scalar(1.0))
 
     def getICs(self, initial_condition):
 
@@ -539,9 +550,7 @@ class WaterBodies(object):
 
     def getThermoClineDepth(self):
         fetch = (self.dynamicArea/1000.0/1000.0)**0.5  # Lake area in km2; fetch in km
-        #self.mixingDepth = pcr.min(pcr.max(self.dynamicArea**0.1, pcr.scalar(1.0)), self.maxWaterDepth)
         self.mixingDepth = pcr.min(pcr.max(self.fetchCoef*(fetch**self.fetchExp), pcr.scalar(1.0)), self.maxWaterDepth)
-        #self.mixingDepth = pcr.min(pcr.scalar(3), self.maxWaterDepth)
 
     def getThermoClineStorage(self):
         self.hypolimnionStorage = pcr.min(
@@ -550,4 +559,13 @@ class WaterBodies(object):
                 (((self.maxWaterDepth - self.mixingDepth)**3.) * (self.waterBodyShapeFactor ** 2))/3.0,
                 ifthen(pcr.scalar(self.waterBodyTyp) == 2,
                        (((self.maxWaterDepth - self.mixingDepth)**3.) * (self.waterBodyShapeFactor ** 2))/6.0)),
+            self.waterBodyStorage)
+
+    def getThermoClineArea(self):
+        self.thermoclineArea = pcr.min(
+            pcr.ifthenelse(
+                pcr.scalar(self.waterBodyTyp) == 1,
+                ((self.maxWaterDepth - self.mixingDepth) * self.waterBodyShapeFactor) ** 2,
+                ifthen(pcr.scalar(self.waterBodyTyp) == 2,
+                       0.5*((self.maxWaterDepth - self.mixingDepth) * self.waterBodyShapeFactor)**2)),
             self.waterBodyStorage)

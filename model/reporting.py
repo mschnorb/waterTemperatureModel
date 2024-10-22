@@ -341,6 +341,9 @@ class Reporting(object):
         if "surfaceWaterTemp" in self.variables_for_report:
             self.surfaceWaterTemp = self._model.routing.surfaceWaterTemp
 
+        if "hypolimnionWaterTemp" in self.variables_for_report:
+            self.hypolimnionWaterTemp = self._model.routing.hypolimnionWaterTemp
+
         # water velocity (m/s)
         if "waterVelocity" in self.variables_for_report:
             self.waterVelocity = self._model.routing.waterVelocity

@@ -265,7 +265,18 @@ netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
 netcdf_long_name[pcrglobwb_variable_name]  = 'surface temperature where open water'
 description[pcrglobwb_variable_name]       = None
-comment[pcrglobwb_variable_name]           = 'Water temperature of surface layer in water bodies. Smae as waterTemperature for channels'
+comment[pcrglobwb_variable_name]           = 'Water temperature of surface layer in water bodies. Same as waterTemperature for channels'
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Hypolimnion water Temperature
+pcrglobwb_variable_name = 'hypolimnionWaterTemp'
+netcdf_short_name[pcrglobwb_variable_name] = 'hypolimnionWaterTemp'
+netcdf_unit[pcrglobwb_variable_name]       = 'K'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'hypolimnion layer temperature where water body'
+description[pcrglobwb_variable_name]       = None
+comment[pcrglobwb_variable_name]           = 'Water temperature of hypolimnion layer in water bodies.'
 latex_symbol[pcrglobwb_variable_name]      = None
 
 # Ice Thickness
