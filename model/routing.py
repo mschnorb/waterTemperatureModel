@@ -294,9 +294,9 @@ class Routing(object):
             # set slope and smoothing interval between dy= y(i+1)-y(i) and dx= x(i+1)-x(i)
             # on the basis of volume
             # slope and smoothing interval
-            self.kSlope = [0.] * (self.nrZLevels)
-            self.mInterval = [0.] * (self.nrZLevels)
-            self.floodVolume = [0.] * (self.nrZLevels)
+            self.kSlope = [0.] * self.nrZLevels
+            self.mInterval = [0.] * self.nrZLevels
+            self.floodVolume = [0.] * self.nrZLevels
             for iCnt in range(1, self.nrZLevels):
                 self.floodVolume[iCnt] = self.floodVolume[iCnt - 1] + \
                                          0.5 * (self.areaFractions[iCnt] + self.areaFractions[iCnt - 1]) * \
@@ -810,7 +810,7 @@ class Routing(object):
 
         logger.info("Using the simplifiedKinematicWave method ! ")
 
-        # route only non negative channelStorage (otherwise stay):
+        # route only non-negative channelStorage (otherwise stay):
         self.channelStorage = self.channelStorage
 
         channelStorageThatWillNotMove = pcr.ifthenelse(self.channelStorage < 0.0, self.channelStorage, 0.0)
@@ -856,7 +856,7 @@ class Routing(object):
                                        self.subDischarge * length_of_sub_time_step
             channelStorageForRouting += storage_change_in_volume
             #
-            # route only non negative channelStorage (otherwise stay):
+            # route only non-negative channelStorage (otherwise stay):
             channelStorageThatWillNotMove += pcr.ifthenelse(channelStorageForRouting < 0.0,
                                                             channelStorageForRouting, 0.0)
             channelStorageForRouting = pcr.max(0.000, channelStorageForRouting)
@@ -2354,8 +2354,10 @@ class Routing(object):
         #        where waterTemp is average temperature in over the
         #        entire water volume and surfaceWaterTemp is the
         #        temperature of the top (surface) water layer.
-        #        For channels surafceWaterTemp = waterTemp
+        #        For channels surfaceWaterTemp = waterTemp
         #        For water bodies surfaceWaterTemp = epilimnion temperature
+
+        # Updated water body energy after lateral advection
         self.totalVolumeEW = self.volumeEW + self.remainingVolumeEW
 
         energyTotal = cover(
@@ -2374,11 +2376,10 @@ class Routing(object):
         self.temp_water_height = self.return_water_body_storage_to_channel(
             self.channelStorageNow) / (self.dynamicFracWat * self.cellArea)
 
+        # Update ice thickness and channel storage
         iceReductionFactor = ifthen(self.landmask, cover(self.dynamicFracWatBeforeRouting / self.dynamicFracWat, 1.0))
-
         self.deltaIceThickness = iceReductionFactor * self.deltaIceThickness
         self.deltaIceThickness = pcr.min(self.deltaIceThickness, self.temp_water_height)
-
         self.iceThickness = iceReductionFactor * self.iceThickness
         self.iceThickness = pcr.max(0,
                                     self.iceThickness + (self.deltaIceThickness + pcr.ifthenelse(
@@ -2395,8 +2396,22 @@ class Routing(object):
         self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp + 0.1, self.iceThresTemp + 0.1,
                                         self.waterTemp)
 
-        # Waterbody layer temperature before heat transfer
-        self.getEnergyRatio(hypolimnionTemperature=self.hypolimnionWaterTemp)
+        # Update water body volume and dimensions
+        #self.getEnergyRatio(hypolimnionTemperature=self.hypolimnionWaterTemp)
+        self.WaterBodies.getThermoClineDepth()    # Update thermocline depth
+        self.WaterBodies.getThermoClineStorage()  # Update hypolimnion storage
+        waterBodyStorageTotal = \
+            pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                       pcr.areaaverage(
+                           pcr.ifthen(self.landmask, self.waterBodyStorage),
+                           pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds)) +
+                       pcr.areatotal(pcr.cover(pcr.ifthen(self.landmask, self.channelStorageNow), 0.0),
+                                     pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds)))
+        self.activeStorage = waterBodyStorageTotal - self.WaterBodies.hypolimnionStorage
+
+        # Calculate temporary water body layer temperatures
+        # Assumes all routed energy added to surface layer and hypolimnion energy is constant
+        self.activeEnergy = self.totEW - self.hypolimnionEnergy
         surfaceTemp = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                                        self.activeEnergy / self.activeStorage /
                                        (self.specificHeatWater * self.densityWater)),
@@ -2432,7 +2447,7 @@ class Routing(object):
         self.hypolimnionEnergy = pcr.ifthenelse(isStable, self.hypolimnionEnergy + convEnergyTotal,
                                                 energyTotal - self.activeEnergy)
 
-        # Updated waterbody layer temperatures after heat transfer or turnover
+        # Updated water body layer temperatures after heat transfer or turnover
         # TODO: Update Ice thickness
         self.surfaceWaterTemp = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                                                  self.activeEnergy / self.activeStorage / (
@@ -2581,7 +2596,7 @@ class Routing(object):
         storageAtLakeAndReservoirs = pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0., self.channelStorage)
         storageAtLakeAndReservoirs = pcr.cover(storageAtLakeAndReservoirs, 0.0)
         #
-        # - move only non negative values and use round down values
+        # - move only non-negative values and use round down values
         storageAtLakeAndReservoirs = pcr.max(0.00, pcr.rounddown(storageAtLakeAndReservoirs))
         self.channelStorage -= storageAtLakeAndReservoirs  # unit: m3
 
@@ -2964,7 +2979,7 @@ class Routing(object):
         # Brunt-Vaisala frequency
         N2 = self.grav / self.densityWater * (self.surfaceWaterDensity - self.hypoWaterDensity) / zc
         N2 = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, N2, 1.0e-12)
-        # Latitudinally-dependent Ekman decay
+        # Latitudinal-dependent Ekman decay
         kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (self.windSpeed ** -1.84)
         # Friction velocity
         wstar = 0.0012 * self.windSpeed
