@@ -277,7 +277,7 @@ class WaterBodies(object):
         self.avgInflow = pcr.ifthen(self.landmask, self.avgInflow)
         self.avgOutflow = pcr.ifthen(self.landmask, self.avgOutflow)
 
-        self.waterBodyMD = pcr.ifthenelse(self.waterBodyArea/1000./1000.>25., pcr.scalar(10.0), pcr.scalar(1.0))
+        #self.waterBodyMD = pcr.ifthenelse(self.waterBodyArea/1000./1000.>25., pcr.scalar(10.0), pcr.scalar(1.0))
 
     def getICs(self, initial_condition):
 
@@ -547,6 +547,8 @@ class WaterBodies(object):
         self.maxWaterDepth = pcr.cover(pcr.ifthenelse(pcr.scalar(self.waterBodyTyp) == 1, lakeMaxDepth,
                                                       pcr.ifthen(pcr.scalar(self.waterBodyTyp) == 2,
                                                                  reservoirMaxDepth)))
+        
+        self.waterBodyMD = pcr.ifthenelse(self.maxWaterDepth>25., pcr.scalar(10.0), pcr.scalar(1.0))
 
     def getThermoClineDepth(self):
         fetch = (self.dynamicArea/1000.0/1000.0)**0.5  # Lake area in km2; fetch in km

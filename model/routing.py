@@ -400,6 +400,8 @@ class Routing(object):
             # Heat transfer constant for ice [W*s^(0.8)/m^(2.6)/degC]
             self.heatTransferIceConstant = vos.readPCRmapClone(iniItems.routingOptions['heatTransferIceConstant'],
                                                                self.cloneMap, self.tmpDir, self.inputDir)
+            self.maxDiffCoef = vos.readPCRmapClone(iniItems.routingOptions['maxDiffCoef'],
+                                                               self.cloneMap, self.tmpDir, self.inputDir)
 
             # Ice cover parameters
             self.noIce = pcr.boolean(1)  # TODO: input as state
@@ -2398,8 +2400,8 @@ class Routing(object):
 
         # Update water body volume and dimensions
         #self.getEnergyRatio(hypolimnionTemperature=self.hypolimnionWaterTemp)
-        self.WaterBodies.getThermoClineDepth()    # Update thermocline depth
-        self.WaterBodies.getThermoClineStorage()  # Update hypolimnion storage
+        #self.WaterBodies.getThermoClineDepth()    # Update thermocline depth
+        #self.WaterBodies.getThermoClineStorage()  # Update hypolimnion storage
         waterBodyStorageTotal = \
             pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                        pcr.areaaverage(
@@ -2411,7 +2413,7 @@ class Routing(object):
 
         # Calculate temporary water body layer temperatures
         # Assumes all routed energy added to surface layer and hypolimnion energy is constant
-        self.activeEnergy = self.totEW - self.hypolimnionEnergy
+        self.activeEnergy = energyTotal - self.hypolimnionEnergy
         surfaceTemp = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                                        self.activeEnergy / self.activeStorage /
                                        (self.specificHeatWater * self.densityWater)),
@@ -2423,7 +2425,7 @@ class Routing(object):
 
         # Determine if water bodies are stable or not based on density difference between layers
         self.calculate_water_density(surfaceTemperature=surfaceTemp, hypolimnionTemperature=hypolimnionTemp)
-        # isStable = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, pcr.boolean(1), pcr.boolean(0))
+        #isStable = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, pcr.boolean(1), pcr.boolean(0))
         isStable = pcr.boolean(1)
 
         # Determine diffusion/convection for stable conditions
@@ -2844,16 +2846,15 @@ class Routing(object):
 
         # Transfer of energy due to turbulent exchange of sensible heat, Qh [W/m2]
         # Uses bulk Richardson number to estimate atmospheric stability correction.
-        # When Tair = -Tsurface, RiB is undefined, so set to arbitrarily large value (e.g. 99999) in this case.
         # Taken from Dingman (2015).
-        RiB = pcr.cover(self.grav * self.zm * (self.temperatureKelvin - self.surfaceTemp) /
-                        (0.5 * (self.temperatureKelvin + self.surfaceTemp) * self.windSpeed ** 2), 99999.0)
-        # Four conditions for setting Cstab: RiB < 0; Rib = 0; 0 > RiB <= refRB; and RiB > refRB
+        RiB = self.grav * self.zm * (self.temperatureKelvin - self.surfaceTemp) / (0.5 * (self.temperatureKelvin + self.surfaceTemp) * self.windSpeed ** 2)
         refRB = 1 / (pcr.ln(self.zm / surfaceRough) + 5.0)
-        Cstab = pcr.cover(pcr.ifthenelse(RiB < 0, (1 - 16 * RiB) ** (1 / 2),
+        # Cstab for stable conditions
+        Cstab = pcr.scalar(1.0)
+        # Three conditions for setting Cstab for unstable conditions: RiB < 0; 0 > RiB <= refRB; and RiB > refRB
+        Cstab = pcr.ifthenelse(RiB < 0, (1 - 16 * RiB) ** (1 / 2),
                                         pcr.ifthenelse(RiB > refRB, (1 - refRB / 0.2) ** 2,
-                                                       (1 - RiB / 0.2) ** 2)), 1.0)
-        #  Cstab = pcr.scalar(1.0)
+                                                                    (1 - RiB   / 0.2) ** 2))
         sensibleHeatTransfer = Cstab * 0.09952 * self.densityAir * self.specificHeatAir * self.windSpeed * \
                                (self.temperatureKelvin - self.surfaceTemp) / (pcr.ln(self.zm / surfaceRough)) ** 2
 
@@ -2862,7 +2863,7 @@ class Routing(object):
         latentHeatTransfer = -self.waterBodyEvaporation / self.dynamicFracWat * self.densityWater * \
                              self.latentHeatVapor / timeSec
 
-        # Net surface heat transfer, Qs = [1-B*exp^(-tz)]*Qrn + Qh + Qle
+        # Net surface heat transfer, Qs = [1-B*exp^(-tz)]*Qrn + Qh + Qle  **TODO**
         surfaceHeatTransfer = (1.0 - extinctCoef) * radiativeHeatTransfer + sensibleHeatTransfer + latentHeatTransfer
 
         # Ice formation
@@ -2888,7 +2889,7 @@ class Routing(object):
         # Shen and Chiang, 1984) or Qw = kw(dT/dz) for laminar flow (i.e. lakes; Lepparanta, 2010)
         iceHeatTransfer = pcr.ifthenelse(
             isLake,
-            self.molCondHeatWater * (self.surfaceWaterTemp - self.iceThresTemp) / loc_water_height,
+            self.molCondHeatWater * (self.surfaceWaterTemp - self.iceThresTemp) / loc_water_height, ##TODO##
             self.heatTransferIceConstant * (self.waterVelocity ** 0.8 / loc_water_height ** 0.2) *
             (self.surfaceWaterTemp - self.iceThresTemp))
         # Ice thickness change at bottom of ice (growth or melt possible); Eqn. 32 from Shen and Chiang (1984)
@@ -2967,22 +2968,26 @@ class Routing(object):
 
     def calculate_diffusion_coefficient(self):
         # Calculate diffusion coefficient kdiff = md*(Ke+Ked+Km)/zc [m/s]
-        # where ke is wind - driven eddy diffusion coefficient,
-        # km is molecular diffusion coefficient,
-        # ked represents enhanced diffusivity from unresolved mixing processes, and
-        # md increases the overall diffusivity for large lakes, which is intended to represent
-        # 3-dimensional mixing processes such as caused by horizontal temperature gradients.
+        # where:
+        #   ke is wind - driven eddy diffusion coefficient,
+        #   km is molecular diffusion coefficient,
+        #   ked represents enhanced diffusivity from unresolved mixing processes, and
+        #   md increases the overall diffusivity for large lakes, which is intended to represent
+        #     3-dimensional mixing processes such as caused by horizontal temperature gradients.
         # Adopted from Community Land Model v5 (Lawrence et al, 2020)
 
         zc = self.WaterBodies.maxWaterDepth / 2.0
         zi = self.WaterBodies.mixingDepth
+        adjWindSpeed = self.windSpeed * 5.0
         # Brunt-Vaisala frequency
         N2 = self.grav / self.densityWater * (self.surfaceWaterDensity - self.hypoWaterDensity) / zc
         N2 = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, N2, 1.0e-12)
         # Latitudinal-dependent Ekman decay
-        kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (self.windSpeed ** -1.84)
+        #kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (self.windSpeed ** -1.84)
+        kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (adjWindSpeed ** -1.84)
         # Friction velocity
-        wstar = 0.0012 * self.windSpeed
+        #wstar = 0.0012 * self.windSpeed
+        wstar = 0.0012 * adjWindSpeed
         # Richardson number
         a1 = 40. * N2 * pcr.sqr(self.vonKarman) * pcr.sqr(zi)
         a2 = pcr.sqr(wstar)
@@ -2990,10 +2995,11 @@ class Routing(object):
         Ri = (-1. + pcr.sqrt(a1 / (a2 * a3))) / 20.0
         ke = self.vonKarman * wstar * zi / (1 + 37 * Ri ** 2) * pcr.exp(-kstar * zi)
         ke = cover(pcr.ifthenelse(self.surfaceWaterTemp > self.iceThresTemp, ke, 0.0), 0.0)  # [m2/s]
+        ke = pcr.ifthenelse(self.noIce, ke, 0.0)  # Update for ice cover
         km = self.molCondHeatWater / (self.specificHeatWater * self.densityWater)  # [m2/s]
         ked = pcr.ifthenelse(N2 >= 7.5e-5, 1.04e-8 * N2 ** -0.43, 0.0)
         #  ked = pcr.max(N2, 7.5e-5)**-0.43 * 1.04e-8  # [m2/s]
-        self.kdiff = pcr.min(self.WaterBodies.waterBodyMD * (ke + km + ked) / 1.0, 6.0e-5)  # [m/s]
+        self.kdiff = pcr.min(self.WaterBodies.waterBodyMD * (ke + km + ked) / 1.0, self.maxDiffCoef)  # [m/s]
 
     def getEnergyRatio(self, hypolimnionTemperature=277.15):
         self.WaterBodies.getThermoClineDepth()
