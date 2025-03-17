@@ -526,6 +526,8 @@ class Routing(object):
                 else:
                     self.surfaceWaterTemp = pcr.scalar(self.iceThresTemp + 5.0)
 
+                self.surfaceTemp = pcr.scalar(self.iceThresTemp + 5.0)
+
                 # Default value for hypolimnion water temperature is 4 degreesC
                 if iniItems.routingOptions['hypolimnionWaterTemperatureIni'] != "None":
                     self.hypolimnionWaterTemp = vos.readPCRmapClone(
@@ -2395,13 +2397,8 @@ class Routing(object):
                                         self.totEW / self.temp_water_height / (
                                                 self.specificHeatWater * self.densityWater),
                                         self.temperatureKelvin)
-        self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp + 0.1, self.iceThresTemp + 0.1,
-                                        self.waterTemp)
 
         # Update water body volume and dimensions
-        #self.getEnergyRatio(hypolimnionTemperature=self.hypolimnionWaterTemp)
-        #self.WaterBodies.getThermoClineDepth()    # Update thermocline depth
-        #self.WaterBodies.getThermoClineStorage()  # Update hypolimnion storage
         waterBodyStorageTotal = \
             pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                        pcr.areaaverage(
@@ -2425,7 +2422,7 @@ class Routing(object):
 
         # Determine if water bodies are stable or not based on density difference between layers
         self.calculate_water_density(surfaceTemperature=surfaceTemp, hypolimnionTemperature=hypolimnionTemp)
-        #isStable = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, pcr.boolean(1), pcr.boolean(0))
+        # isStable = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, pcr.boolean(1), pcr.boolean(0))
         isStable = pcr.boolean(1)
 
         # Determine diffusion/convection for stable conditions
@@ -2449,14 +2446,70 @@ class Routing(object):
         self.hypolimnionEnergy = pcr.ifthenelse(isStable, self.hypolimnionEnergy + convEnergyTotal,
                                                 energyTotal - self.activeEnergy)
 
-        # Updated water body layer temperatures after heat transfer or turnover
-        # TODO: Update Ice thickness
+        # Water body surface layer temperature after heat transfer or turnover
         self.surfaceWaterTemp = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                                                  self.activeEnergy / self.activeStorage / (
                                                          self.specificHeatWater * self.densityWater)),
                                       self.waterTemp)
-        self.surfaceWaterTemp = pcr.ifthenelse(self.surfaceWaterTemp < self.iceThresTemp + 0.1,
+
+        # Check for and add new ice; phase change occurs if the temperature is below freezing and liquid water remains
+        # Assume this only occurs in the epilimnion (i.e. at the water body surface)
+        isNewIce = pcr.ifthenelse(self.noIce, #TODO
+                                pcr.ifthenelse(self.surfaceWaterTemp < self.iceThresTemp,
+                                               pcr.boolean(1), pcr.boolean(0)),
+                                pcr.boolean(0))
+        # Update temporary water depth to mixing depth for lakes [m]
+        temp_water_depth = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                                                self.WaterBodies.mixingDepth),
+                                 self.temp_water_height)
+        # Calculate energy available for freezing [J/m2]
+        freezingEnergy = pcr.ifthenelse(isNewIce,
+                                        self.specificHeatWater * self.densityWater * temp_water_depth *
+                                        (self.surfaceWaterTemp - self.iceThresTemp),0.0)
+        freezingEnergyTotal = cover(
+            pcr.ifthen(
+                pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                pcr.areatotal(pcr.ifthen(self.landmask, freezingEnergy * self.dynamicFracWat * self.cellArea),
+                              pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds))),
+            freezingEnergy * self.dynamicFracWat * self.cellArea)
+
+        # Update ice thickness
+        newIceThickness = cover(
+            pcr.ifthen(
+                pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                pcr.areatotal(pcr.ifthen(self.landmask, pcr.min(
+                    -freezingEnergyTotal / self.latentHeatFusion / self.densityWater / self.dynamicFracWat / self.cellArea,
+                    temp_water_depth)),
+                              pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds))),
+            pcr.min(-freezingEnergyTotal / self.dynamicFracWat / self.cellArea, temp_water_depth)) * iceReductionFactor
+        self.deltaIceThickness = self.deltaIceThickness + newIceThickness
+        self.iceThickness = self.iceThickness + self.deltaIceThickness
+
+        #Update energy storage in water to account for latent heat of fusion of new ice
+        energyAverageLakeCell = cover(
+            (energyTotal - freezingEnergyTotal) * self.cellArea /
+            pcr.areatotal(pcr.cover(self.cellArea, 0.0),
+                          pcr.ifthen(self.landmask, self.WaterBodies.waterBodyIds)), energyTotal - freezingEnergyTotal)
+        self.totEW = cover(energyAverageLakeCell / (self.dynamicFracWat * self.cellArea), 1e-16)
+
+        # Update average temperature in water bodies and channels
+        self.waterTemp = pcr.ifthenelse(self.temp_water_height > self.critical_water_height,
+                                        self.totEW / self.temp_water_height / (
+                                                self.specificHeatWater * self.densityWater),
+                                        self.temperatureKelvin)
+        self.waterTemp = pcr.ifthenelse(self.waterTemp < self.iceThresTemp + 0.1, self.iceThresTemp + 0.1,
+                                        self.waterTemp)
+
+        # Update waterbody surface layer temperature
+        self.activeEnergy = self.activeEnergy - freezingEnergyTotal
+        self.surfaceWaterTemp = cover(pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
+                                                 self.activeEnergy / self.activeStorage / (
+                                                         self.specificHeatWater * self.densityWater)),
+                                      self.waterTemp)
+        self.surfaceWaterTemp = pcr.ifthenelse(self.surfaceWaterTemp < self.iceThresTemp,
                                                self.iceThresTemp + 0.1, self.surfaceWaterTemp)
+
+        # Waterbody hypolimnion temperature
         self.hypolimnionWaterTemp = pcr.ifthen(pcr.scalar(self.WaterBodies.waterBodyIds) > 0.,
                                                self.hypolimnionEnergy / self.WaterBodies.hypolimnionStorage /
                                                (self.specificHeatWater * self.densityWater))
@@ -2804,53 +2857,42 @@ class Routing(object):
 
         # If modelling surface Ice, update noIce condition, else set noIce to TRUE
         if self.surfaceIce:
-            # Update noIce condition; use conditions from previous timestep; use surface water temperature
-            self.noIce = pcr.ifthenelse(self.iceThickness > 0,
-                                        pcr.boolean(0),
-                                        pcr.ifthenelse((self.surfaceHeatTransfer < 0) &
-                                                       (self.surfaceWaterTemp <= self.iceThresTemp + 0.1),
-                                                       pcr.boolean(0), pcr.boolean(1)))
+            # Update noIce condition; use conditions from previous timestep
+            self.noIce = pcr.ifthenelse(self.iceThickness > 0, pcr.boolean(0), pcr.boolean(1))
         else:
             self.noIce = pcr.boolean(1)
-
-        # Set nominal ice thickness if necessary to avoid missing values in subsequent calculations
-        self.iceThickness = pcr.ifthenelse(self.noIce, 0.0,
-                                           pcr.ifthenelse(self.iceThickness == 0, 0.001, self.iceThickness))
 
         # Bulk extinction coefficient for solar radiation through ice from Shen and Chiang (1984), Eqn. 7
         extinctCoef = pcr.ifthenelse(self.noIce, 0.0, self.Bi * pcr.exp(-self.Ti * self.iceThickness))
 
         # Update surface temperature for mixed open water and ice conditions [K]
         # Surface temperature for ice from Shen and Chiang (1984), Eqn. 30
-        self.surfaceTemp = pcr.ifthenelse(self.noIce, self.surfaceWaterTemp,
-                                          pcr.min(self.iceThickness / self.thermCondIce *
-                                                  self.surfaceHeatTransfer + 273.15, self.iceThresTemp))
+       # self.surfaceTemp = pcr.ifthenelse(self.noIce, self.surfaceWaterTemp,
+       #                                   pcr.min(self.iceThickness / self.thermCondIce *
+       #                                           self.surfaceHeatTransfer + 273.15, self.iceThresTemp))
         # Set constraint such that surface temperature, if negative, is never less than air temperature (if also
         # negative) or the ice threshold temperature (if air temperature is positive), i.e. where ice,
         # airTemp <= surfTemp <= 0 degC
-        self.surfaceTemp = pcr.ifthenelse(self.surfaceTemp < self.iceThresTemp,
-                                          pcr.min(pcr.max(self.surfaceTemp, self.temperatureKelvin),
-                                                  self.iceThresTemp), self.surfaceTemp)
+       # self.surfaceTemp = pcr.ifthenelse(self.surfaceTemp < self.iceThresTemp,
+       #                                   pcr.min(pcr.max(self.surfaceTemp, self.temperatureKelvin),
+       #                                           self.iceThresTemp), self.surfaceTemp)
+        
         # Update surface properties: thermal conductivity of ice, surface roughness, and surface albedo.
         # Thermal conductivity relation with temperature [K] constructed by fitting data from
         # https://www.engineeringtoolbox.com/ice-thermal-properties-d_576.html.
-        self.thermCondIce = ifthenelse(self.noIce, 2.22, 7.831194 * pcr.exp(-0.00466 * self.surfaceTemp))
+        self.thermCondIce = pcr.min(2.22, 7.831194 * pcr.exp(-0.00466 * self.surfaceTemp))
         surfaceRough = pcr.ifthenelse(self.noIce, self.z0w, self.z0i)
         surfaceAlbedo = pcr.ifthenelse(self.noIce, self.albedoWater, self.albedoIce)
 
-        # Transfer of energy due to net radiation, Qrn
-        radiativeHeatTransfer = (1 - surfaceAlbedo) * self.radiationShort
-        radiativeHeatTransfer = radiativeHeatTransfer - \
-                                self.stefanBoltzman * (
+        # Transfer of energy at surface due to solar and longwave radiation
+        solarHeatTransfer = (1 - surfaceAlbedo) * self.radiationShort
+        longwaveHeatTransfer = self.stefanBoltzman * (
                                         self.surfaceTemp ** 4 - self.atmosEmis * self.temperatureKelvin ** 4)
 
         # Transfer of energy due to turbulent exchange of sensible heat, Qh [W/m2]
-        # Uses bulk Richardson number to estimate atmospheric stability correction.
-        # Taken from Dingman (2015).
+        # Uses bulk Richardson number to estimate atmospheric stability correction. Taken from Dingman (2015).
         RiB = self.grav * self.zm * (self.temperatureKelvin - self.surfaceTemp) / (0.5 * (self.temperatureKelvin + self.surfaceTemp) * self.windSpeed ** 2)
         refRB = 1 / (pcr.ln(self.zm / surfaceRough) + 5.0)
-        # Cstab for stable conditions
-        Cstab = pcr.scalar(1.0)
         # Three conditions for setting Cstab for unstable conditions: RiB < 0; 0 > RiB <= refRB; and RiB > refRB
         Cstab = pcr.ifthenelse(RiB < 0, (1 - 16 * RiB) ** (1 / 2),
                                         pcr.ifthenelse(RiB > refRB, (1 - refRB / 0.2) ** 2,
@@ -2859,14 +2901,16 @@ class Routing(object):
                                (self.temperatureKelvin - self.surfaceTemp) / (pcr.ln(self.zm / surfaceRough)) ** 2
 
         # Latent heat flux, Qle, due to evapotranspiration (open water only) [W/m2]
-        self.waterBodyEvaporation = pcr.ifthenelse(self.noIce, self.waterBodyEvaporation, 0)
+        self.waterBodyEvaporation = pcr.ifthenelse(self.noIce, self.waterBodyEvaporation, 0.0)
         latentHeatTransfer = -self.waterBodyEvaporation / self.dynamicFracWat * self.densityWater * \
                              self.latentHeatVapor / timeSec
 
-        # Net surface heat transfer, Qs = [1-B*exp^(-tz)]*Qrn + Qh + Qle  **TODO**
-        surfaceHeatTransfer = (1.0 - extinctCoef) * radiativeHeatTransfer + sensibleHeatTransfer + latentHeatTransfer
+        # Net surface heat transfer to ice
+        iceHeatTransfer_surface =  pcr.ifthenelse(self.noIce, 0.0,
+                                                  (1-extinctCoef) * solarHeatTransfer + longwaveHeatTransfer +
+                                                  sensibleHeatTransfer + latentHeatTransfer)
 
-        # Ice formation
+        ## Ice formation ##
         # Estimate channel velocity from discharge and geometry; Set nominal water height and velocity for lakes
         isLake = pcr.cover(pcr.scalar(self.WaterBodies.waterBodyIds), 0.0) > 0.
         # loc_water_height = pcr.min(self.max_water_height,
@@ -2880,14 +2924,21 @@ class Routing(object):
             pcr.ifthenelse(isLake,
                            0.001,
                            pcr.cover(pcr.min(self.discharge / (loc_water_height * self.wMean), 20.0), 0.01)))
+        # Update surface temperature where ice
+        self.surfaceTemp = pcr.ifthenelse(self.noIce, self.surfaceWaterTemp,
+                                          self.iceThickness / self.thermCondIce *
+                                          iceHeatTransfer_surface)
+
         # Heat transfer at upper ice surface and melt if Tsurface = 0oC; Eqn. 29b from Shen and Chiang (1984)
         deltaIceThickness_surface = pcr.ifthenelse(self.noIce, 0.0, pcr.ifthenelse(
             self.surfaceTemp == self.iceThresTemp,
-            -surfaceHeatTransfer / self.densityIce / self.latentHeatFusion * timeSec, 0.0))
+            -(iceHeatTransfer_surface + self.thermCondIce*(self.iceThresTemp - self.surfaceTemp) / self.iceThickness) /
+            self.densityIce / self.latentHeatFusion * timeSec, 0.0))
         deltaIceThickness_surface = pcr.min(deltaIceThickness_surface, 0.0)  # melt only at surface
+
         # Heat transfer to bottom of ice, where Qw = hi*(Tw-Tm) for turbulent flow (i.e. rivers; Eqns. 19 & 20 from
         # Shen and Chiang, 1984) or Qw = kw(dT/dz) for laminar flow (i.e. lakes; Lepparanta, 2010)
-        iceHeatTransfer = pcr.ifthenelse(
+        iceHeatTransfer_bottom = pcr.ifthenelse(
             isLake,
             self.molCondHeatWater * (self.surfaceWaterTemp - self.iceThresTemp) / loc_water_height, ##TODO##
             self.heatTransferIceConstant * (self.waterVelocity ** 0.8 / loc_water_height ** 0.2) *
@@ -2896,7 +2947,7 @@ class Routing(object):
         deltaIceThickness_bottom = pcr.ifthenelse(self.noIce, 0.0,
                                                   timeSec / (self.densityIce * self.latentHeatFusion) *
                                                   (self.thermCondIce * (self.iceThresTemp - self.surfaceTemp) /
-                                                   self.iceThickness - iceHeatTransfer))
+                                                   self.iceThickness - iceHeatTransfer_bottom))
         # deltaIceThickness: change in thickness per day, melt negative
         self.deltaIceThickness = deltaIceThickness_surface + deltaIceThickness_bottom
         self.deltaIceThickness = pcr.max(-self.iceThickness, self.deltaIceThickness)
@@ -2910,7 +2961,7 @@ class Routing(object):
         deltaIceThickness_melt = pcr.max(0, -self.deltaIceThickness)
         verticalGain = watQ + landRunoff / self.dynamicFracWat + deltaIceThickness_melt
 
-        # net cumulative input for mass balance check [m3]
+        # Net cumulative input for mass balance check [m3]
         # change in water storage due to vertical change only used to limit heating and cooling of surface water
         dtotStorLoc = verticalGain
         totStorLoc = self.return_water_body_storage_to_channel(self.channelStorageTimeBefore) / \
@@ -2919,15 +2970,16 @@ class Routing(object):
         dtotStorLoc = pcr.max(-totStorLoc, dtotStorLoc)
 
         # Update advected energy to account for ice melt
-        # advectedEnergyPrecip = advectedEnergyPrecip + deltaIceThickness_melt * self.iceThresTemp * \
-        #                       self.specificHeatWater * self.densityWater/timeSec
         advectedEnergyPrecip = pcr.ifthenelse(self.noIce, advectedEnergyPrecip,
                                               deltaIceThickness_melt * self.iceThresTemp *
                                               self.specificHeatWater * self.densityWater / timeSec)
 
-        # Change in energy storage and resulting temperature
-        dtotEWLoc = pcr.ifthenelse(self.noIce, surfaceHeatTransfer,
-                                   extinctCoef * radiativeHeatTransfer - iceHeatTransfer) * timeSec
+        # Change in water energy storage and resulting temperature
+        waterHeatTransfer = pcr.ifthenelse(self.noIce,
+                                           solarHeatTransfer + longwaveHeatTransfer + sensibleHeatTransfer +
+                                           latentHeatTransfer,
+                                           extinctCoef * solarHeatTransfer - iceHeatTransfer_bottom)
+        dtotEWLoc = waterHeatTransfer * timeSec
         dtotEWAdv = (advectedEnergyInflow + advectedEnergyPrecip) * timeSec
         self.totEW = pcr.max(0, self.totEW + dtotEWLoc + dtotEWAdv)
 
@@ -2940,11 +2992,11 @@ class Routing(object):
                                         self.waterTemp)
 
         # Capture local energy balance terms for output
-        self.radiativeHeatTransfer = radiativeHeatTransfer
+        #self.radiativeHeatTransfer = radiativeHeatTransfer
         self.sensibleHeatTransfer = sensibleHeatTransfer
         self.latentHeatTransfer = latentHeatTransfer
-        self.surfaceHeatTransfer = surfaceHeatTransfer
-        self.iceHeatTransfer = pcr.ifthenelse(self.noIce, 0, iceHeatTransfer)
+        #self.surfaceHeatTransfer = surfaceHeatTransfer
+        #self.iceHeatTransfer = pcr.ifthenelse(self.noIce, 0, iceHeatTransfer)
         self.advectedEnergyInflow = advectedEnergyInflow
         self.advectedEnergyPrecip = advectedEnergyPrecip
         self.dtotEWLoc = dtotEWLoc
@@ -2978,16 +3030,13 @@ class Routing(object):
 
         zc = self.WaterBodies.maxWaterDepth / 2.0
         zi = self.WaterBodies.mixingDepth
-        adjWindSpeed = self.windSpeed * 5.0
         # Brunt-Vaisala frequency
         N2 = self.grav / self.densityWater * (self.surfaceWaterDensity - self.hypoWaterDensity) / zc
         N2 = pcr.ifthenelse(self.surfaceWaterDensity < self.hypoWaterDensity, N2, 1.0e-12)
         # Latitudinal-dependent Ekman decay
-        #kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (self.windSpeed ** -1.84)
-        kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (adjWindSpeed ** -1.84)
+        kstar = 6.6 * pcr.sqrt(pcr.sin(self.latitudes)) * (self.windSpeed ** -1.84)
         # Friction velocity
-        #wstar = 0.0012 * self.windSpeed
-        wstar = 0.0012 * adjWindSpeed
+        wstar = 0.0012 * self.windSpeed
         # Richardson number
         a1 = 40. * N2 * pcr.sqr(self.vonKarman) * pcr.sqr(zi)
         a2 = pcr.sqr(wstar)
