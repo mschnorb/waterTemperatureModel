@@ -4,3 +4,5 @@ model/*.pyc
 model/__pycache__/*.pyc
 *.ini
 
+.DS_Store
+model/.DS_Store

@@ -421,6 +421,9 @@ class Reporting(object):
         if "iceHeatTransfer" in self.variables_for_report:
             self.iceHeatTransfer = self._model.routing.iceHeatTransfer
 
+        if "waterHeatTransfer" in self.variables_for_report:
+            self.waterHeatTransfer = self._model.routing.iceHeatTransfer
+
         if "radiativeHeatTransfer" in self.variables_for_report:
             self.radiativeHeatTransfer = self._model.routing.radiativeHeatTransfer
 

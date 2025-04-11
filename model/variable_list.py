@@ -395,7 +395,7 @@ netcdf_short_name[pcrglobwb_variable_name] = 'surfaceHeatTransfer'
 netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = 'surface downward heat flux in air'
+netcdf_long_name[pcrglobwb_variable_name]  = 'surface downward heat flux from atmosphere'
 description[pcrglobwb_variable_name]       = 'Net heat transfer at water or ice surface'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
@@ -406,8 +406,19 @@ netcdf_short_name[pcrglobwb_variable_name] = 'iceHeatTransfer'
 netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
 netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
 netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
-netcdf_long_name[pcrglobwb_variable_name]  = 'ice heat transfer'
-description[pcrglobwb_variable_name]       = 'Heat transfer to ice form water'
+netcdf_long_name[pcrglobwb_variable_name]  = 'heat flux into ice layer'
+description[pcrglobwb_variable_name]       = 'Heat transfer to ice from water and atmosphere'
+comment[pcrglobwb_variable_name]           = None
+latex_symbol[pcrglobwb_variable_name]      = None
+
+# Net heat transfer to water to/from atmosphere
+pcrglobwb_variable_name = 'waterHeatTransfer'
+netcdf_short_name[pcrglobwb_variable_name] = 'waterHeatTransfer'
+netcdf_unit[pcrglobwb_variable_name]       = 'W.m-2'
+netcdf_monthly_total_unit[pcrglobwb_variable_name] = None
+netcdf_yearly_total_unit[pcrglobwb_variable_name]  = None
+netcdf_long_name[pcrglobwb_variable_name]  = 'heat flux into water layer'
+description[pcrglobwb_variable_name]       = 'Heat transfer to water from atmosphere when no ice is present, or from ice when ice is present'
 comment[pcrglobwb_variable_name]           = None
 latex_symbol[pcrglobwb_variable_name]      = None
 
